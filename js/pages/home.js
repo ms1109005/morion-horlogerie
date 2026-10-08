@@ -77,6 +77,7 @@ function renderAccueil() {
     <article class="chapitre chapitre--${c.finition.toLowerCase()}" data-chapitre="${i}" aria-labelledby="chapitre-${i}">
       <p class="chapitre__index num" aria-hidden="true">0${i + 1} <span>sur 04</span></p>
       <div class="chapitre__texte">
+        <p class="chapitre__heure num">${c.heure}</p>
         <h2 class="chapitre__titre" id="chapitre-${i}">${c.titre}</h2>
         <p class="chapitre__corps">${c.texte}</p>
         <p class="chapitre__prix">Prisme Chronographe 42 en ${FINISHES[c.finition].nom.toLowerCase()}, à partir de <span class="num">${formatPrice(PR.base[c.finition])}</span></p>
@@ -205,7 +206,7 @@ export default {
     const montrer = (etat) => {
       if (!vitrinePrete) { poser(etat); d.setConfig(cfgChap(montreChap)); return; }
       d.to({ ...etat, k: 0, visible: 0, eclate: 0 }, { immediate: true });
-      vitrine.solo(montreChap, { ...etat, tiltX: d.tilt.rotation.x, tiltY: d.tilt.rotation.y });
+      vitrine.solo(FINITIONS_FINALE.indexOf(CHAPITRES[montreChap].finition), { ...etat, tiltX: d.tilt.rotation.x, tiltY: d.tilt.rotation.y });
     };
     const segments = [];
     let vivant = true;
@@ -292,7 +293,7 @@ export default {
     const encre = (i) => {
       if (i < 0) { delete html0.dataset.chap; delete html0.dataset.encre; return; }
       html0.dataset.chap = CHAPITRES[i].finition.toLowerCase();
-      if (['OJ', 'OR'].includes(CHAPITRES[i].finition)) html0.dataset.encre = 'sombre'; else delete html0.dataset.encre;
+      delete html0.dataset.encre; // écrins sombres : la nav garde son encre claire
     };
     offs.push(() => encre(-1));
     const S = () => window.innerHeight / Math.tan(Math.PI / 3);
@@ -574,7 +575,7 @@ function reduit(el, front, app, P, depart, etroit) {
     const chap = best?.dataset.chapitre !== undefined ? CHAPITRES[Number(best.dataset.chapitre)].finition : null;
     if (chap) {
       html0.dataset.chap = chap.toLowerCase();
-      if (['OJ', 'OR'].includes(chap)) html0.dataset.encre = 'sombre'; else delete html0.dataset.encre;
+      delete html0.dataset.encre;
     } else { delete html0.dataset.chap; delete html0.dataset.encre; }
   }, { threshold: [0, 0.25, 0.5, 0.75, 1] });
   sections.forEach((s) => io.observe(s));

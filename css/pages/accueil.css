@@ -97,17 +97,23 @@
   position: absolute; inset: 0;
   display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: center;
   padding: calc(var(--rehaut) + 6rem) var(--marge) calc(var(--rehaut) + 3rem);
-  background: var(--chap); color: var(--chap-encre);
+  background: radial-gradient(52% 64% at var(--lx, 62%) 42%, var(--chap-lum), transparent 72%), var(--chap); color: var(--chap-encre);
+  animation: chap-lumiere 16s ease-in-out infinite alternate;
 }
+@property --lx { syntax: '<percentage>'; inherits: false; initial-value: 62%; }
+/* la lumière de l'heure tourne lentement autour de la montre */
+@keyframes chap-lumiere { from { --lx: 50%; } to { --lx: 82%; } }
+.chapitre__heure { font: 400 var(--t-legende) / 1 var(--f-display); letter-spacing: 0.24em; text-transform: uppercase; opacity: 0.72; }
+@media (prefers-reduced-motion: reduce) { .chapitre { animation: none; } }
 /* Aplats clairs : une ombre douce derrière la montre, sinon l'or se fond dans l'or. */
-.chapitre--oj::after, .chapitre--or::after {
-  content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(44% 54% at 72% 46%, rgb(26 18 6 / 0.32), transparent 72%);
+.chapitre::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
 }
-.chapitre--ac { --chap: var(--c-chap-ac); --chap-encre: var(--c-chap-ac-encre); }
-.chapitre--cn { --chap: var(--c-chap-cn); --chap-encre: var(--c-chap-cn-encre); }
-.chapitre--oj { --chap: var(--c-chap-oj); --chap-encre: var(--c-chap-oj-encre); }
-.chapitre--or { --chap: var(--c-chap-or); --chap-encre: var(--c-chap-or-encre); }
+.chapitre--ac { --chap: var(--c-chap-ac); --chap-encre: var(--c-chap-ac-encre); --chap-lum: var(--c-chap-ac-lum); }
+.chapitre--cn { --chap: var(--c-chap-cn); --chap-encre: var(--c-chap-cn-encre); --chap-lum: var(--c-chap-cn-lum); }
+.chapitre--oj { --chap: var(--c-chap-oj); --chap-encre: var(--c-chap-oj-encre); --chap-lum: var(--c-chap-oj-lum); }
+.chapitre--or { --chap: var(--c-chap-or); --chap-encre: var(--c-chap-or-encre); --chap-lum: var(--c-chap-or-lum); }
 .chapitre__texte { display: grid; gap: var(--e-4); justify-items: start; max-width: 30rem; }
 /* L'index du chapitre se lit comme un index de cadran : en marge, jamais au-dessus du titre. */
 .chapitre__index {
@@ -120,10 +126,7 @@
 .chapitre__prix { font-size: var(--t-petit); opacity: 0.86; }
 /* Les filets sont définis en encre claire : sur un aplat d'or ils s'évaporent, et le seul
    lien du chapitre perdait son soulignement. Même geste que la nav en encre sombre. */
-.chapitre--ac, .chapitre--oj, .chapitre--or {
-  --c-filet: rgb(28 24 16 / 0.22); --c-filet-fort: rgb(28 24 16 / 0.45);
-}
-.chapitre--ac { --c-filet: rgb(12 14 16 / 0.22); --c-filet-fort: rgb(12 14 16 / 0.5); }
+.chapitre { --c-filet: rgb(255 255 255 / 0.2); --c-filet-fort: rgb(255 255 255 / 0.5); }
 .chapitre .lien-texte { color: inherit; }
 .chapitre .lien-texte:hover { text-decoration-color: currentColor; }
 .chapitre__rendu { display: none; }

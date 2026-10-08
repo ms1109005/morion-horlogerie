@@ -17,24 +17,24 @@ export const PIECES = [
 // Chapitres couleur : un aplat et une matière par finition, dans l’ordre du catalogue.
 export const CHAPITRES = [
   {
-    finition: 'AC', visuel: 'matiere-acier',
+    finition: 'AC', visuel: 'matiere-acier', heure: '08:00 · lumière du matin',
     titre: 'Acier, satiné puis poli.',
     texte: 'Les plats sont brossés dans un seul sens, les arêtes polies miroir. Sur la lunette, six facettes et six reflets.',
   },
   {
-    finition: 'CN', visuel: 'matiere-ceramique',
-    titre: 'Céramique noire, plus dure que l’acier.',
-    texte: 'Frittée à 1 450 °C puis polie au diamant, elle ne se raye pas et ne pâlit pas. Elle pèse moitié moins que l’acier.',
-  },
-  {
-    finition: 'OJ', visuel: 'matiere-or-jaune',
+    finition: 'OJ', visuel: 'matiere-or-jaune', heure: '12:00 · plein jour',
     titre: 'Or jaune, 18 carats.',
     texte: 'Un or chaud, coulé puis forgé pour la maison. Poli, il prend la couleur de la lumière qui l’entoure.',
   },
   {
-    finition: 'OR', visuel: 'matiere-or-rose',
+    finition: 'OR', visuel: 'matiere-or-rose', heure: '19:00 · soleil couchant',
     titre: 'Or rose, 18 carats.',
     texte: 'Plus de cuivre, une teinte qui ne s’éteint pas. Sur le cadran fumé, il fait ressortir le brun du morion.',
+  },
+  {
+    finition: 'CN', visuel: 'matiere-ceramique', heure: '23:00 · la nuit',
+    titre: 'Céramique noire, plus dure que l’acier.',
+    texte: 'Frittée à 1 450 °C puis polie au diamant, elle ne se raye pas et ne pâlit pas. Elle pèse moitié moins que l’acier.',
   },
 ];
 
