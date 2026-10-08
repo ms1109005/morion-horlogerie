@@ -1,0 +1,294 @@
+/* MORION : accueil. Sept temps : hero, assemblage, chapitres, seuil, atelier, finale, pied. */
+
+/* ---- Hero ---- */
+.hero-accueil {
+  position: relative; height: 100dvh; min-height: 34rem;
+  display: grid; align-content: end;
+  padding: 0 var(--marge) calc(var(--rehaut) + clamp(2.5rem, 7vh, 4rem));
+}
+/* Sur fond fumé, la montre flotte : un creux d'ombre très diffus la décolle, comme l'ombre
+   portée des aplats clairs. Posé sous le canvas (tout #page l'est), donc derrière la montre. */
+.hero-accueil::before, .atelier__config::before, .finale::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(38% 46% at var(--ombre-x, 65%) var(--ombre-y, 49%), rgb(0 0 0 / 0.42), transparent 72%);
+}
+.atelier__config::before { --ombre-x: 35%; --ombre-y: 51%; }
+.finale::before { background: radial-gradient(58% 32% at 50% 56%, rgb(0 0 0 / 0.4), transparent 74%); }
+/* Le mot MORION géant passe derrière la montre (le canvas est au-dessus de #page). */
+.geant {
+  position: absolute; left: 50%; top: 47%; translate: -50% -50%;
+  font: 400 var(--t-geant) / 1 var(--f-display); letter-spacing: 0.06em; white-space: nowrap;
+  color: rgb(236 234 230 / 0.075); pointer-events: none; user-select: none;
+}
+.hero-accueil__texte { position: relative; max-width: 31rem; }
+.hero-accueil__texte h1 { font-size: var(--t-1); }
+.hero-accueil__texte p { margin-top: var(--e-4); color: var(--c-encre-2); max-width: 27rem; }
+.actions { display: flex; flex-wrap: wrap; gap: var(--e-3); margin-top: var(--e-6); }
+.hero-accueil__etiquette {
+  position: absolute; left: 65%; bottom: calc(var(--rehaut) + clamp(2rem, 5vh, 3rem)); translate: -50% 0;
+}
+/* Copie pleine du mot, au-dessus de la montre : une facette à 60° la découvre au défilement. */
+.avant-hero { position: absolute; left: 0; top: 0; width: 100%; height: 100dvh; min-height: 34rem; will-change: transform; }
+.geant--plein { color: var(--c-encre); clip-path: polygon(130% 0, 130% 0, 130% 100%, 100% 100%); }
+
+/* ---- Assemblage (épinglé) ---- */
+.assemblage { position: relative; height: 100dvh; padding: calc(var(--rehaut) + 7rem) var(--marge) calc(var(--rehaut) + 3rem); }
+.assemblage__texte { max-width: 26rem; display: grid; gap: var(--e-4); }
+.assemblage__texte h2 { font-size: var(--t-2); line-height: 1.15; text-wrap: balance; }
+.assemblage__texte p { color: var(--c-encre-2); text-wrap: pretty; }
+.assemblage__compteur {
+  position: absolute; left: var(--marge); bottom: calc(var(--rehaut) + 2.5rem);
+  display: flex; align-items: baseline; gap: var(--e-2);
+}
+.assemblage__compteur [data-compteur] { font: 400 clamp(3rem, 6vw, 5.5rem) / 1 var(--f-display); letter-spacing: 0.02em; min-width: 2ch; }
+.assemblage__legende { font: 400 var(--t-legende) / 1 var(--f-display); letter-spacing: 0.24em; text-transform: uppercase; color: var(--c-encre-2); }
+.assemblage__phase {
+  position: absolute; right: var(--marge); bottom: calc(var(--rehaut) + 2.75rem);
+  font: 400 var(--t-legende) / 1 var(--f-display); letter-spacing: 0.24em; text-transform: uppercase; color: var(--c-encre-2);
+}
+
+/* Étiquettes des pièces : calque #avant, ancrées au point projeté de chaque pièce. */
+.pieces { position: absolute; inset: 0; opacity: var(--o, 0); }
+.piece {
+  position: absolute; left: 0; top: 0; width: 0; height: 0; padding: 0; border: 0; background: none;
+  pointer-events: none; will-change: transform;
+}
+.piece::after { /* point de lume sur la pièce */
+  content: ''; position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--c-lume); box-shadow: 0 0 0 3px rgb(16 18 21 / 0.6);
+}
+.piece::before { content: ''; position: absolute; background: rgb(236 234 230 / 0.55); }
+.piece--haut::before, .piece--bas::before { left: -0.5px; width: 1px; height: var(--long); }
+.piece--haut::before { bottom: 0; }
+.piece--bas::before { top: 0; }
+.piece--gauche::before, .piece--droite::before { top: -0.5px; height: 1px; width: var(--long); }
+.piece--gauche::before { right: 0; }
+.piece--droite::before { left: 0; }
+.piece__nom {
+  position: absolute; white-space: nowrap; pointer-events: auto; cursor: pointer;
+  display: inline-flex; align-items: center; min-height: 32px; padding: 0 var(--e-3); border-radius: var(--r-pilule);
+  font: 500 var(--t-legende) / 1 var(--f-texte); letter-spacing: 0.02em; color: var(--c-encre);
+  background: rgb(16 18 21 / 0.78); box-shadow: inset 0 0 0 var(--filet) var(--c-filet-fort);
+  transition: box-shadow var(--dur-micro) linear, background-color var(--dur-micro) linear;
+}
+/* Zone de clic portée à 44 px sans grossir la pastille. */
+.piece__nom::after { content: ''; position: absolute; inset: -6px -4px; }
+.piece--haut .piece__nom { bottom: var(--long); left: 0; translate: -50% -6px; }
+.piece--bas .piece__nom { top: var(--long); left: 0; translate: -50% 6px; }
+.piece--gauche .piece__nom { right: var(--long); top: 0; translate: -6px -50%; }
+.piece--droite .piece__nom { left: var(--long); top: 0; translate: 6px -50%; }
+.piece:hover .piece__nom, .piece[aria-expanded="true"] .piece__nom { box-shadow: inset 0 0 0 1.5px var(--c-bleui); background: rgb(16 18 21 / 0.92); }
+.piece:focus-visible { outline: none; }
+.piece:focus-visible .piece__nom { outline: 1.5px solid var(--c-bleui); outline-offset: 3px; }
+
+.piece-fiche {
+  position: absolute; right: var(--marge); bottom: calc(var(--rehaut) + 2rem); width: min(22rem, calc(100vw - 2 * var(--marge)));
+  display: grid; gap: var(--e-2); padding: var(--e-5); border-radius: var(--r-carte);
+  background: var(--c-fond-2); box-shadow: inset 0 0 0 var(--filet) var(--c-filet-fort), 0 24px 48px rgb(0 0 0 / 0.35);
+  pointer-events: auto;
+}
+.piece-fiche__nom { font-size: var(--t-3, 1.25rem); outline: none; }
+.piece-fiche__texte { color: var(--c-encre-2); text-wrap: pretty; }
+.piece-fiche__fermer { justify-self: start; margin-top: var(--e-2); }
+
+/* ---- Chapitres couleur (épinglés) ---- */
+.chapitres { position: relative; height: 100dvh; overflow: hidden; }
+.chapitre {
+  position: absolute; inset: 0;
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: center;
+  padding: calc(var(--rehaut) + 6rem) var(--marge) calc(var(--rehaut) + 3rem);
+  background: var(--chap); color: var(--chap-encre);
+}
+/* Aplats clairs : une ombre douce derrière la montre, sinon l'or se fond dans l'or. */
+.chapitre--oj::after, .chapitre--or::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(44% 54% at 72% 46%, rgb(26 18 6 / 0.32), transparent 72%);
+}
+.chapitre--ac { --chap: var(--c-chap-ac); --chap-encre: var(--c-chap-ac-encre); }
+.chapitre--cn { --chap: var(--c-chap-cn); --chap-encre: var(--c-chap-cn-encre); }
+.chapitre--oj { --chap: var(--c-chap-oj); --chap-encre: var(--c-chap-oj-encre); }
+.chapitre--or { --chap: var(--c-chap-or); --chap-encre: var(--c-chap-or-encre); }
+.chapitre__texte { display: grid; gap: var(--e-4); justify-items: start; max-width: 30rem; }
+/* L'index du chapitre se lit comme un index de cadran : en marge, jamais au-dessus du titre. */
+.chapitre__index {
+  position: absolute; top: calc(var(--rehaut) + 6rem); right: var(--marge);
+  font: 400 var(--t-legende) / 1 var(--f-display); letter-spacing: 0.24em; text-transform: uppercase;
+}
+.chapitre__index span { opacity: 0.6; }
+.chapitre__titre { font-size: var(--t-1); line-height: 1.05; text-wrap: balance; }
+.chapitre__corps { font-size: 1.125rem; line-height: 1.5; opacity: 0.86; text-wrap: pretty; }
+.chapitre__prix { font-size: var(--t-petit); opacity: 0.86; }
+/* Les filets sont définis en encre claire : sur un aplat d'or ils s'évaporent, et le seul
+   lien du chapitre perdait son soulignement. Même geste que la nav en encre sombre. */
+.chapitre--ac, .chapitre--oj, .chapitre--or {
+  --c-filet: rgb(28 24 16 / 0.22); --c-filet-fort: rgb(28 24 16 / 0.45);
+}
+.chapitre--ac { --c-filet: rgb(12 14 16 / 0.22); --c-filet-fort: rgb(12 14 16 / 0.5); }
+.chapitre .lien-texte { color: inherit; }
+.chapitre .lien-texte:hover { text-decoration-color: currentColor; }
+.chapitre__rendu { display: none; }
+.chapitre__visuel { position: absolute; left: var(--marge); bottom: calc(var(--rehaut) + 2rem); width: clamp(8rem, 12vw, 11rem); }
+
+/* ---- Seuil des salles (couloir 3D, épinglé) ---- */
+.seuil { position: relative; height: 100dvh; display: grid; place-items: center; text-align: center; padding: 0 var(--marge); }
+.seuil__texte { display: grid; gap: var(--e-4); justify-items: center; max-width: 34rem; opacity: 0; }
+.seuil__texte h2 { font-size: var(--t-1); line-height: 1.05; text-wrap: balance; }
+.seuil__texte p:not(.chapitre__index) { color: var(--c-encre-2); text-wrap: pretty; }
+.seuil__texte .chapitre__index { color: var(--c-encre-2); }
+
+/* ---- Atelier express ---- */
+.atelier { position: relative; }
+.atelier__config {
+  position: relative;
+  min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-content: center;
+  padding: calc(var(--rehaut) + 6rem) var(--marge) calc(var(--rehaut) + 4rem);
+  column-gap: var(--e-6); row-gap: var(--e-6);
+}
+.atelier__config > * { grid-column: 2; }
+.atelier__texte { display: grid; gap: var(--e-4); max-width: 32rem; }
+.atelier__texte h2 { font-size: var(--t-1); line-height: 1.05; text-wrap: balance; }
+.atelier__texte p { color: var(--c-encre-2); text-wrap: pretty; }
+.atelier__zones { display: grid; gap: var(--e-5); }
+.atelier__zones fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: var(--e-2); }
+.atelier__zones legend { font: 400 var(--t-legende) / 1.6 var(--f-display); letter-spacing: 0.24em; text-transform: uppercase; color: var(--c-encre-2); padding: 0; }
+.puce--teinte span { gap: var(--e-2); padding-left: var(--e-2); }
+.teinte { width: 20px; height: 20px; border-radius: 50%; background: var(--teinte); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18); flex: none; }
+.atelier__achat { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e-5); }
+.atelier__prix { color: var(--c-encre-2); }
+.atelier__prix .num { color: var(--c-encre); font-weight: 500; font-size: 1.25rem; margin-left: var(--e-2); }
+
+.atelier__photos {
+  display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--e-4);
+  padding: var(--e-7) var(--marge) var(--e-8); background: var(--sol-fume);
+  /* Le sol fumé est ancré sur sa propre boîte et vient buter contre le halo, qui est fixe :
+     sans ce fondu, le raccord s'imprime en ligne horizontale au travers de l'écran. */
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 6rem);
+  mask-image: linear-gradient(180deg, transparent 0, #000 6rem);
+}
+.atelier__entete { grid-column: 1 / span 6; display: grid; gap: var(--e-3); margin-bottom: var(--e-5); }
+.atelier__entete h3 { font-size: var(--t-2); line-height: 1.15; text-wrap: balance; }
+.atelier__entete p { color: var(--c-encre-2); text-wrap: pretty; max-width: 34rem; }
+.atelier__grand { grid-column: 1 / -1; }
+.atelier__vignette { grid-column: 2 / span 4; }
+.atelier__vignette + .atelier__vignette { grid-column: 8 / span 4; margin-top: var(--e-8); }
+
+/* ---- Finale ---- */
+.finale {
+  position: relative; min-height: 100dvh; overflow: hidden;
+  /* Contenu calé en bas : le vide qui restait entre les prix et le pied remonte au-dessus du
+     titre, où le mot géant l'occupe. */
+  display: grid; grid-template-rows: auto auto; align-content: end; gap: var(--e-7);
+  padding: calc(var(--rehaut) + 4rem) var(--marge) calc(var(--rehaut) + 1rem);
+}
+.finale__mot { top: 50%; }
+.finale__titre { position: relative; font-size: var(--t-2); text-align: center; text-wrap: balance; }
+.finale__rang {
+  position: relative; list-style: none; padding: 0; display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--e-4);
+  /* Les quatre Prisme sont le dernier plan du film : ils prennent la hauteur disponible, ce qui
+     ferme du même coup la bande morte qui traînait avant le pied. */
+  --vue-h: clamp(13rem, 48vh, 26rem);
+}
+/* Le disque « Choisir » se range sous le prix : posé sur la montre il passerait derrière elle
+   (tout #page est sous le canvas), posé sur le nom il le couvrirait. */
+.finale__zone {
+  position: relative; display: grid; justify-items: center; gap: 2px; padding-bottom: 4.5rem;
+  text-decoration: none; border-radius: var(--r-carte);
+}
+.finale__vue { display: block; width: 100%; height: var(--vue-h); }
+.finale__nom { font-weight: 500; }
+.finale__prix { font-size: var(--t-petit); color: var(--c-encre-2); }
+/* Bouton rond « Choisir » : il sort sous la montre choisie. */
+.finale__choisir {
+  position: absolute; left: 50%; bottom: 0; width: 68px; height: 68px; translate: -50% 0; border-radius: 50%;
+  display: grid; place-items: center; font: 600 0.8125rem var(--f-texte);
+  background: var(--c-encre); color: var(--c-sur-encre);
+  /* Au repos le disque s'annonce sans crier : sans lui, le dernier temps se lisait comme un
+     catalogue inerte à la souris. */
+  opacity: 0.42; scale: 0.88; transition: opacity var(--dur-court) linear, scale var(--dur-court) var(--ease-echappement);
+}
+.finale__zone.choisie .finale__choisir, .finale__zone:focus-visible .finale__choisir { opacity: 1; scale: 1; }
+.finale__zone:focus-visible { outline: 1.5px solid var(--c-bleui); outline-offset: 6px; }
+
+/* ---- Mouvement réduit : tout est posé, rien n'est épinglé ---- */
+.accueil-reduit .avant-hero, .accueil-reduit .assemblage__phase { display: none; }
+.accueil-reduit .assemblage { height: auto; min-height: 60vh; }
+.accueil-reduit .assemblage__compteur { position: static; margin-top: var(--e-6); }
+.accueil-reduit .chapitres { height: auto; }
+.accueil-reduit .chapitre { position: relative; inset: auto; min-height: 80vh; }
+.accueil-reduit .seuil__texte { opacity: 1; }
+/* Rendu fixe de la finition à la place de la montre 3D. */
+.accueil-reduit .chapitre__rendu { display: block; width: min(100%, 30rem); height: auto; justify-self: center; }
+.accueil-reduit .finale__choisir { opacity: 1; scale: 1; }
+
+/* ---- Étroit ---- */
+@media (max-width: 719px) {
+  .hero-accueil { padding-bottom: calc(var(--rehaut) + 2rem); }
+  /* Empilées, deux pilules de largeurs différentes se lisent comme une erreur de gabarit. */
+  .hero-accueil .actions { display: grid; justify-items: stretch; }
+  /* La montre est haute et centrée sur écran étroit : l'ombre la suit. */
+  .hero-accueil::before { --ombre-x: 50%; --ombre-y: 30%; }
+  .atelier__config::before { --ombre-x: 50%; --ombre-y: 27%; }
+  /* À 390, le mot court à la verticale le long du réhaut gauche, lisible en entier. */
+  .geant {
+    top: 9%; left: calc(var(--rehaut) + 0.5rem); translate: none;
+    writing-mode: vertical-rl; transform: rotate(180deg);
+    font-size: 15vw; letter-spacing: 0.08em; line-height: 1;
+  }
+  .hero-accueil__etiquette { display: none; }
+
+  .assemblage { padding-top: calc(var(--rehaut) + 5rem); }
+  .assemblage__texte h2 { font-size: var(--t-3, 1.5rem); }
+  .assemblage__texte p { display: none; }
+  .assemblage__compteur { bottom: calc(var(--rehaut) + 1.5rem); }
+  .assemblage__phase { display: none; }
+  .piece-fiche { left: var(--marge); right: var(--marge); width: auto; bottom: calc(var(--rehaut) + 1rem); }
+  /* Fiche ouverte : elle occupe le bas de l'écran. Le compteur, qui passerait derrière la
+     montre éclatée, devient l'en-tête de la fiche (JS) : le fil du temps 3 reste lisible. */
+  .assemblage__compteur--fiche {
+    position: static; margin: 0 0 var(--e-2); padding-bottom: var(--e-3);
+    border-bottom: var(--filet) solid var(--c-filet);
+  }
+  .assemblage__compteur--fiche [data-compteur] { font-size: 1.75rem; }
+
+  .chapitre { grid-template-columns: 1fr; align-items: end; padding-bottom: calc(var(--rehaut) + 2rem); }
+  /* L'index passe à gauche : à droite il se lirait derrière la montre, et l'ombre suit le centre. */
+  .chapitre__index { left: var(--marge); right: auto; top: calc(var(--rehaut) + 4.5rem); }
+  .chapitre--oj::after, .chapitre--or::after { background: radial-gradient(52% 30% at 50% 43%, rgb(26 18 6 / 0.34), transparent 74%); }
+  .chapitre__titre { font-size: var(--t-2); }
+  .chapitre__corps { font-size: 1rem; }
+  .chapitre__visuel { display: none; }
+
+  /* Le bloc tient en un écran : la montre en haut, les trois zones en rangées qui défilent
+     à l'horizontale, comme les onglets du configurateur de la fiche. */
+  .atelier__config { grid-template-columns: 1fr; align-content: end; row-gap: var(--e-4); min-height: 100dvh; padding-top: 40vh; padding-bottom: calc(var(--rehaut) + 2rem); }
+  .atelier__config > * { grid-column: 1; }
+  .atelier__texte h2 { font-size: var(--t-2); }
+  .atelier__texte p { display: none; }
+  .atelier__zones { gap: var(--e-3); }
+  .atelier__zones .puces {
+    flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain;
+    margin-inline: calc(var(--marge) * -1); padding: 2px var(--marge);
+    /* La rangée se fond au bord : une pastille coupée net se lit comme un défaut, pas comme
+       une invitation à faire défiler. */
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 3rem), transparent 100%);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 3rem), transparent 100%);
+  }
+  .atelier__zones .puces::-webkit-scrollbar { display: none; }
+  .atelier__zones .puce { flex: none; }
+  .atelier__achat { gap: var(--e-4); }
+  .atelier__photos { grid-template-columns: 1fr 1fr; }
+  .atelier__entete { grid-column: 1 / -1; }
+  .atelier__vignette, .atelier__vignette + .atelier__vignette { grid-column: auto; margin-top: 0; }
+
+  /* Deux rangées ne tiennent pas dans un écran centré : la finale prend la hauteur de son
+     contenu, sinon le pied coupe les disques « Choisir » en demi-lunes. */
+  .finale {
+    min-height: auto; align-content: start; gap: var(--e-6);
+    padding-top: calc(var(--rehaut) + 8.5rem); padding-bottom: calc(var(--rehaut) + 3rem);
+  }
+  .finale::before { background: radial-gradient(70% 30% at 50% 60%, rgb(0 0 0 / 0.4), transparent 76%); }
+  .finale__mot { top: 50%; left: 50%; translate: -50% -50%; writing-mode: horizontal-tb; transform: none; font-size: 22vw; }
+  .finale__rang { grid-template-columns: 1fr 1fr; row-gap: var(--e-6); --vue-h: 24vh; }
+  .finale__choisir { opacity: 1; scale: 1; width: 64px; height: 64px; }
+}

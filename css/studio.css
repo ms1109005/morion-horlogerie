@@ -1,0 +1,65 @@
+/* Page de validation du jalon 1 : outil interne, pas le design du site. */
+:root {
+  --fond-clair: radial-gradient(120% 90% at 50% 40%, #f1f0ee 0%, #d9d8d5 55%, #b9b8b5 100%);
+  --fond-sombre: radial-gradient(110% 80% at 50% 42%, #2a2826 0%, #121110 60%, #070707 100%);
+  --encre: #141312;
+  --encre-douce: #5b5955;
+  --trait: rgba(20, 19, 18, 0.14);
+  --panneau: rgba(250, 249, 247, 0.82);
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--encre);
+  background: #d9d8d5;
+  overflow: hidden;
+}
+body[data-fond="clair"] { background: var(--fond-clair); }
+body[data-fond="sombre"] {
+  background: var(--fond-sombre);
+  --panneau: rgba(22, 21, 20, 0.78);
+  --encre: #eeece8;
+  --encre-douce: #a9a6a0;
+  --trait: rgba(238, 236, 232, 0.14);
+}
+#stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+
+.panneau {
+  position: fixed;
+  top: 16px; right: 16px; bottom: 16px;
+  width: 300px;
+  display: flex; flex-direction: column;
+  background: var(--panneau);
+  backdrop-filter: blur(18px) saturate(1.2);
+  border: 1px solid var(--trait);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.panneau__tete { padding: 18px 20px 12px; border-bottom: 1px solid var(--trait); }
+.marque { margin: 0; font-weight: 700; letter-spacing: 0.32em; font-size: 13px; }
+.panneau__titre { margin: 2px 0 0; color: var(--encre-douce); font-size: 12px; }
+.panneau__titre span { opacity: 0.7; }
+#options { flex: 1; overflow: auto; padding: 8px 20px 16px; }
+.champ { display: grid; gap: 6px; padding: 10px 0; border-bottom: 1px solid var(--trait); }
+.champ:last-child { border-bottom: 0; }
+.champ > span { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--encre-douce); }
+.champ select, .champ input[type="text"] {
+  width: 100%; padding: 8px 10px; font: inherit; color: var(--encre);
+  background: transparent; border: 1px solid var(--trait); border-radius: 8px;
+}
+.champ input[type="range"] { width: 100%; }
+.boutons { display: flex; flex-wrap: wrap; gap: 6px; }
+.boutons button {
+  font: inherit; font-size: 12px; padding: 6px 10px; cursor: pointer;
+  color: var(--encre); background: transparent;
+  border: 1px solid var(--trait); border-radius: 999px;
+}
+.boutons button:hover, .boutons button[aria-pressed="true"] { background: var(--encre); color: var(--panneau); }
+.panneau__pied { padding: 14px 20px 18px; border-top: 1px solid var(--trait); }
+.prix { margin: 0; font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ref { margin: 2px 0 0; color: var(--encre-douce); font-size: 12px; letter-spacing: 0.06em; }
+
+@media (max-width: 720px) {
+  .panneau { top: auto; left: 12px; right: 12px; bottom: 12px; width: auto; height: 42vh; }
+}

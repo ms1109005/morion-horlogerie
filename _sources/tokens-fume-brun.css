@@ -1,0 +1,92 @@
+/* MORION : jetons de la direction « Cadran fumé » (docs/decisions.md, D1).
+   La page est un cadran fumé : dégradé brun-gris vers le presque noir, encre d'impression
+   claire, un seul accent (acier bleui) pour l'état actif. Contrastes mesurés (WCAG) :
+   encre #eceae6 sur #121213 : 15,6:1 ; sur #4a433e (centre fumé) : 8,1:1.
+   encre-2 #a7a19b sur #121213 : 7,3:1 ; sur #2a2624 : 5,9:1 ; sur #4a433e : 3,8:1 seulement,
+   donc jamais de texte secondaire posé au centre du fumé (il reste sous la montre).
+   encre-3 #6f6964 : 3,5:1, traits et grands textes uniquement.
+   bleui #6d83ff sur #121213 : 5,7:1 (texte actif, repères). alerte #ff8a6b : 8,1:1.
+   Chapitres : 5,3:1 (acier), 7,9:1 (or jaune), 6,5:1 (or rose).
+   Durées et courbes : miroir de js/core/motion.js (tests/motion.test.js). */
+
+:root {
+  color-scheme: dark;
+
+  /* Couleurs par rôle */
+  --c-fume-c: #5c4632;        /* centre du cadran fumé, sous la montre : le quartz morion
+                                 est un brun fumé, pas un gris. S 9 % -> 30 %. */
+  --c-fume-m: #2f2620;
+  --c-fond: #141110;          /* bord du cadran, fond de page (noir chaud, pas neutre) */
+  --c-fond-2: #1e1917;        /* surfaces posées (tiroir, cartes) */
+  --c-fond-3: #2a2320;        /* champ, survol */
+  --c-encre: #eceae6;         /* impression du cadran */
+  --c-encre-2: #a7a19b;       /* texte secondaire */
+  --c-encre-3: #6f6964;       /* traits, légendes non essentielles */
+  --c-filet: rgb(236 234 230 / 0.12);
+  --c-filet-fort: rgb(236 234 230 / 0.28);
+  --c-bleui: #6d83ff;         /* acier bleui : l'accent, états actifs */
+  --c-lume: #d9f0cf;          /* luminescence : repère minuscule, jamais un aplat */
+  --c-alerte: #ff8a6b;        /* erreurs de formulaire (6,6:1 sur #121213) */
+  --c-rideau: #1c1917;        /* dalle du rideau de transition */
+  --c-sur-encre: #151414;     /* texte posé sur un bouton clair */
+
+  /* Sol fumé des sections sous le pli : le cadran ne s'éteint jamais (soleillé + dégradé). */
+  --sol-fume:
+    repeating-conic-gradient(from 0deg at 72% 0%, rgb(255 255 255 / 0.022) 0deg 0.6deg, transparent 0.6deg 1.8deg),
+    radial-gradient(120% 90% at 72% 0%, var(--c-fume-m) 0%, var(--c-fond) 70%);
+
+  /* Chapitres couleur de l'accueil (aplats pleine page, bascule nette) */
+  --c-chap-ac: #5d6670;  --c-chap-ac-encre: #f2f3f4;
+  --c-chap-cn: #070708;  --c-chap-cn-encre: #ecebe9;
+  --c-chap-oj: #cfa84f;  --c-chap-oj-encre: #1c1810;
+  --c-chap-or: #c9907d;  --c-chap-or-encre: #26160f;
+
+  /* Fontes : Michroma, capitale large des cadrans de chronographe ; Albert Sans pour lire. */
+  --f-display: 'Michroma', 'Albert Sans', sans-serif;
+  --f-texte: 'Albert Sans', system-ui, sans-serif;
+
+  /* Échelle typographique fluide (390 → 1440) */
+  --t-geant: clamp(4.5rem, 15.5vw, 16rem);
+  --t-1: clamp(2rem, 1.35rem + 2.2vw, 3.25rem);
+  --t-2: clamp(1.5rem, 1.15rem + 1.2vw, 2.25rem);
+  --t-3: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem);
+  --t-corps: 1.0625rem;
+  --t-petit: 0.875rem;
+  --t-legende: 0.75rem;       /* minimum : impression de cadran, capitales espacées */
+
+  /* Espacements, base 4 px */
+  --e-1: 0.25rem; --e-2: 0.5rem; --e-3: 0.75rem; --e-4: 1rem; --e-5: 1.5rem;
+  --e-6: 2rem; --e-7: 3rem; --e-8: 4.5rem; --e-9: 7rem;
+  --marge: clamp(1.25rem, 3.6vw, 3.5rem);     /* marge latérale, dans le réhaut */
+  --rehaut: clamp(0.5rem, 1vw, 0.875rem);     /* distance du réhaut au bord */
+
+  /* Formes : pilule pour ce qui se touche, 16 px pour ce qui se pose, 2 px pour les guichets */
+  --r-pilule: 999px;
+  --r-carte: 16px;
+  --r-guichet: 2px;
+  --filet: 1px;
+
+  /* Mouvement */
+  --dur-micro: 180ms;
+  --dur-court: 300ms;
+  --dur-vague: 450ms;
+  --dur-moyen: 800ms;
+  --dur-long: 1200ms;
+  --dur-voyage: 1600ms;
+  --dur-intro: 2400ms;
+  --ease-sortie: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-traverse: cubic-bezier(0.76, 0, 0.24, 1);
+  --ease-echappement: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-lineaire: linear;
+
+  /* Calques */
+  --z-page: 10;
+  --z-rideau: 20;
+  --z-scene: 30;
+  --z-avant: 40;
+  --z-dessus: 42;             /* commandes d'une page posées au-dessus de la montre */
+  --z-nav: 50;
+  --z-rehaut: 55;             /* au-dessus de la nav et du menu : le cadran encadre toujours */
+  --z-panier: 60;
+  --z-intro: 70;
+}

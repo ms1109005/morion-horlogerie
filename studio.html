@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MORION, studio 3D</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&display=swap">
+  <link rel="stylesheet" href="css/studio.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body data-fond="clair">
+  <canvas id="stage" aria-label="Montre MORION en 3D"></canvas>
+  <aside class="panneau" id="panneau" aria-label="Options de la montre">
+    <header class="panneau__tete">
+      <p class="marque">MORION</p>
+      <p class="panneau__titre">Studio 3D <span>jalon 1</span></p>
+    </header>
+    <div id="options"></div>
+    <footer class="panneau__pied">
+      <p class="prix" id="prix" aria-live="polite"></p>
+      <p class="ref" id="ref"></p>
+    </footer>
+  </aside>
+  <noscript>Le studio 3D demande JavaScript.</noscript>
+  <script type="module" src="js/studio.js"></script>
+</body>
+</html>

@@ -1,0 +1,318 @@
+/* MORION : coquille. Calques, fond fumé, réhaut, nav, rideau, intro, tiroir, atomes partagés. */
+
+/* ---- Fond : le cadran fumé. Le halo (dégradé + soleillé) suit la montre en translation seule,
+   posée par le directeur : le GPU compose, rien n'est repeint pendant un voyage. ---- */
+.fond { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; background: var(--c-fond); }
+.fond__halo {
+  position: absolute; left: 50%; top: 50%; width: 150vw; height: 190dvh;
+  transform: translate3d(-50%, -50%, 0);
+  background:
+    repeating-conic-gradient(from 0deg, rgb(255 255 255 / 0.032) 0deg 0.6deg, transparent 0.6deg 1.8deg),
+    radial-gradient(closest-side, var(--c-fume-c) 0%, var(--c-fume-m) 42%, var(--c-fond) 100%);
+  -webkit-mask-image: radial-gradient(closest-side, #000 60%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 60%, transparent 100%);
+  will-change: transform;
+}
+
+/* ---- Calques ---- */
+/* #page sans z-index : pas de contexte d'empilement. Son contenu passe sous la montre (canvas
+   z 30), sauf les éléments .au-dessus (commandes du configurateur) qui passent au-dessus. */
+#page { position: relative; min-height: 100dvh; outline: none; overflow-x: clip; }
+.au-dessus { position: relative; z-index: var(--z-dessus); }
+#scene {
+  position: fixed; inset: 0; z-index: var(--z-scene);
+  width: 100vw; height: 100dvh; pointer-events: none;
+}
+#scene.interactif { pointer-events: auto; touch-action: pan-y; cursor: grab; }
+#scene.interactif:active { cursor: grabbing; }
+#avant { position: fixed; inset: 0; z-index: var(--z-avant); pointer-events: none; }
+
+/* ---- Réhaut : 60 minutes le long du bord de l'écran ---- */
+.rehaut { position: fixed; inset: var(--rehaut); z-index: var(--z-rehaut); pointer-events: none; }
+.rehaut svg { width: 100%; height: 100%; overflow: visible; }
+.rehaut .trace { fill: none; stroke: var(--c-filet); }
+/* 0,3 d'alpha sur 5 px passait sous le seuil de perception : la signature des soixante
+   minutes n'existait qu'en index de cinq. Ce sont des traits, pas du texte. */
+.rehaut .minute { stroke: rgb(236 234 230 / 0.44); stroke-width: 1; }
+.rehaut .cinq { stroke: rgb(236 234 230 / 0.62); stroke-width: 2; }
+.rehaut .repere { fill: var(--c-bleui); }
+
+/* ---- Navigation, imprimée comme un cadran ---- */
+.nav {
+  position: fixed; z-index: var(--z-nav);
+  top: calc(var(--rehaut) + clamp(0.75rem, 2vw, 1.5rem));
+  left: var(--marge); right: var(--marge);
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  height: 48px; font-size: var(--t-petit); letter-spacing: 0.03em;
+  pointer-events: none;
+}
+.nav > * { pointer-events: auto; }
+/* Dès qu'on défile, un voile fumé sous la nav : le contenu ne passe plus sous les liens. */
+.nav::before {
+  content: ''; position: fixed; left: 0; right: 0; top: 0; height: calc(var(--rehaut) + 8.5rem); z-index: -1;
+  background: linear-gradient(180deg, var(--c-fond) 0%, var(--c-fond) 46%, rgb(16 18 21 / 0.72) 70%, transparent 100%);
+  opacity: 0; transition: opacity var(--dur-court) linear; pointer-events: none;
+}
+html.defile .nav::before { opacity: 1; }
+/* Chapitres couleur de l'accueil : rien ne défile sous la nav (bloc épinglé), pas de voile ;
+   sur les aplats d'or, nav, guichet et réhaut s'impriment en sombre, comme sur un cadran clair. */
+html[data-chap] .nav::before, html.epingle .nav::before { opacity: 0; }
+html[data-encre="sombre"] .nav, html[data-encre="sombre"] .rehaut {
+  --c-encre: #1c1810; --c-encre-2: rgb(28 24 16 / 0.74); --c-sur-encre: #f1ede4;
+  --c-filet: rgb(28 24 16 / 0.2); --c-filet-fort: rgb(28 24 16 / 0.4);
+}
+/* Aplat acier et couloir du seuil : le gris secondaire de la nav n'y tiendrait pas le contraste. */
+html[data-chap="ac"] .nav, html.couloir .nav, html.couloir .seuil__texte { --c-encre-2: rgb(242 243 244 / 0.84); }
+html[data-encre="sombre"] .nav { color: var(--c-encre); }
+html[data-encre="sombre"] .rehaut .minute { stroke: rgb(28 24 16 / 0.32); }
+html[data-encre="sombre"] .rehaut .cinq { stroke: rgb(28 24 16 / 0.62); }
+.nav__liens { display: flex; gap: var(--e-6); }
+.nav__liens a {
+  display: inline-flex; align-items: center; min-height: 44px;
+  text-decoration: none; color: var(--c-encre-2); transition: color var(--dur-micro) linear;
+}
+.nav__liens a:hover, .nav__liens a[aria-current="page"] { color: var(--c-encre); }
+.nav__liens a[aria-current="page"] { text-decoration: underline; text-decoration-color: var(--c-bleui); }
+.marque {
+  display: inline-flex; align-items: center; gap: var(--e-3);
+  font: 400 1.0625rem var(--f-display); letter-spacing: 0.42em; margin-right: -0.42em;
+  text-decoration: none; padding: var(--e-2) 0;
+}
+.nav__droite { display: flex; justify-content: flex-end; align-items: center; gap: var(--e-5); }
+.nav__menu { display: none; }
+
+/* Le panier est un guichet de date, précédé de son icône. L'icône est dessinée au même trait
+   que les chevrons et le réhaut (1,5 px, bouts ronds) : le site n'a pas de fonte d'icônes et
+   n'en prend pas une pour un seul signe. Le mot « Écrin » reste le nom accessible du bouton. */
+.guichet {
+  display: inline-flex; align-items: center; gap: var(--e-2); min-height: 44px;
+  font-size: var(--t-petit); letter-spacing: 0.03em; color: var(--c-encre);
+}
+.guichet__icone {
+  width: 20px; height: 20px; flex: none;
+  fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+  transition: transform var(--dur-court) var(--ease-sortie);
+}
+.guichet:hover .guichet__icone { transform: translateY(-1px); }
+.guichet__fen {
+  display: inline-grid; place-items: center; min-width: 32px; height: 26px; padding: 0 6px;
+  background: var(--c-encre); color: var(--c-sur-encre); border-radius: var(--r-guichet);
+  font: 600 0.875rem var(--f-texte); font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 0 0 2px var(--c-sur-encre), 0 0 0 1px var(--c-encre-2);
+  overflow: hidden;
+}
+.guichet__fen span { display: block; }
+
+/* Menu plein écran (étroit) */
+.menu {
+  position: fixed; inset: 0; z-index: calc(var(--z-nav) + 1);
+  background: radial-gradient(120% 70% at 80% 12%, var(--c-fume-m) 0%, var(--c-fond) 70%);
+  display: grid; align-content: start; gap: var(--e-8);
+  padding: calc(var(--rehaut) + 5.5rem) var(--marge) calc(var(--rehaut) + 2rem);
+  visibility: hidden; opacity: 0;
+}
+.menu.ouvert { visibility: visible; opacity: 1; }
+.menu__liens { display: grid; gap: var(--e-3); list-style: none; padding: 0; }
+.menu__liens a { font: 500 var(--t-1) / 1.1 var(--f-texte); text-decoration: none; letter-spacing: -0.02em; display: block; padding: var(--e-2) 0; }
+.menu__familles { display: grid; gap: var(--e-4); list-style: none; padding: 0; border-top: var(--filet) solid var(--c-filet); padding-top: var(--e-5); }
+.menu__familles a { display: flex; justify-content: space-between; gap: var(--e-4); text-decoration: none; color: var(--c-encre-2); padding: var(--e-2) 0; }
+.menu__familles a span:last-child { color: var(--c-encre); font-variant-numeric: tabular-nums; }
+.menu__fermer { position: absolute; top: calc(var(--rehaut) + clamp(0.75rem, 2vw, 1.5rem)); right: var(--marge); height: 48px; }
+.menu__marque { position: absolute; top: calc(var(--rehaut) + clamp(0.75rem, 2vw, 1.5rem)); left: var(--marge); height: 48px; font-size: 0.9375rem; }
+.menu__liens a[aria-current="page"] { text-decoration: underline; text-decoration-color: var(--c-bleui); text-decoration-thickness: 2px; text-underline-offset: 0.18em; }
+
+/* ---- Atomes partagés ---- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--e-2);
+  min-height: 48px; padding: 0 var(--e-5); border-radius: var(--r-pilule);
+  font: 600 0.9375rem var(--f-texte); letter-spacing: 0.005em; text-decoration: none; white-space: nowrap;
+  transition: background-color var(--dur-micro) linear, box-shadow var(--dur-micro) linear, transform var(--dur-micro) var(--ease-sortie);
+}
+.btn:active { transform: scale(0.97); }
+.btn--plein { background: var(--c-encre); color: var(--c-sur-encre); }
+.btn--plein:hover { background: #fff; }
+.btn--trait { box-shadow: inset 0 0 0 var(--filet) var(--c-filet-fort); color: var(--c-encre); }
+.btn--trait:hover { box-shadow: inset 0 0 0 var(--filet) var(--c-encre); }
+.btn[disabled], .btn[aria-disabled="true"] { opacity: 0.45; pointer-events: none; }
+.lien-texte { color: var(--c-encre); text-decoration: underline; text-decoration-color: var(--c-filet-fort); }
+.lien-texte:hover { text-decoration-color: var(--c-encre); }
+
+/* Étiquette de référence : le même bloc partout, imprimé comme le bas d'un cadran. */
+.etiquette { display: grid; gap: 2px; text-align: center; text-transform: uppercase; }
+.etiquette b { font: 400 var(--t-legende) / 1.6 var(--f-display); letter-spacing: 0.3em; color: var(--c-encre); }
+.etiquette span { font: 400 var(--t-legende) / 1.6 var(--f-display); letter-spacing: 0.26em; color: var(--c-encre-2); }
+
+/* Découpe des titres (split.js) : chaque mot dans un masque. */
+.mot { display: inline-block; overflow: clip; vertical-align: top; padding-bottom: 0.08em; margin-bottom: -0.08em; }
+.mot > span { display: inline-block; will-change: transform; }
+
+/* ---- Rideau : une dalle de quartz inclinée à 60°, la montre passe par-dessus ---- */
+.rideau { position: fixed; inset: 0; z-index: var(--z-rideau); pointer-events: none; overflow: hidden; }
+.rideau.actif { pointer-events: auto; }
+.rideau__dalle, .intro__dalle {
+  position: absolute; left: 50%; top: 50%; width: 240vmax; height: 320vmax;
+  transform: translate(-50%, -50%) rotate(30deg) translateX(-200vmax);
+  /* Deux facettes : l'une monte vers l'arête centrale et prend la lumière, l'autre retombe dans
+     l'ombre. À mi-transition, l'arête traverse le centre de l'écran à 60°. */
+  background: linear-gradient(90deg, #161312 0%, var(--c-fume-m) 44%, #3f3833 49.85%, #1d1a18 50.15%, #141211 100%);
+  will-change: transform;
+}
+.rideau__dalle::before, .rideau__dalle::after, .intro__dalle::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 1.5px;
+  background: linear-gradient(180deg, transparent 15%, rgb(236 234 230 / 0.8) 50%, transparent 85%);
+}
+.rideau__dalle::before { left: 0; }
+.rideau__dalle::after, .intro__dalle::after { right: 0; }
+html.reduit .rideau__dalle { transform: translate(-50%, -50%) rotate(30deg); opacity: 0; }
+
+/* ---- Intro ---- */
+.intro { position: fixed; inset: 0; z-index: var(--z-intro); overflow: hidden; display: grid; place-items: center; cursor: pointer; }
+html.intro-vue .intro, html.no-js .intro { display: none; }
+.intro__dalle {
+  transform: translate(-50%, -50%) rotate(30deg);
+  background:
+    radial-gradient(60% 45% at 50% 50%, var(--c-fume-c) 0%, var(--c-fume-m) 45%, var(--c-fond) 100%);
+}
+.intro__contenu { position: relative; display: grid; justify-items: center; gap: clamp(4.25rem, 7.4vw, 6rem); }
+/* Pendant l'intro, la gouttière de défilement prend la teinte du bord de la dalle. */
+html:has(#intro) { background: #2b2623; scrollbar-color: transparent transparent; }
+/* Hexagone tracé arête par arête en transform seul : le compositeur le joue même pendant que le
+   fil principal construit la montre. Chaque arête part d'un sommet (angle i × 60°). */
+.intro__hex { position: relative; width: calc(var(--R) * 2); height: calc(var(--R) * 1.732); }
+.intro__hex i {
+  position: absolute; left: 50%; top: 50%; width: var(--R); height: 1.2px; margin-top: -0.6px;
+  background: var(--c-encre); transform-origin: 0 50%;
+  transform: rotate(calc(var(--i) * 60deg)) translateX(var(--R)) rotate(120deg) scaleX(1);
+}
+/* Minuterie : 60 traits autour de l'hexagone, allumés au rythme du vrai chargement. */
+.intro__minutes { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+.intro__minutes i {
+  position: absolute; left: -0.5px; top: 0; width: 1px; height: 7px;
+  background: var(--c-encre); opacity: 0.16;
+  transform: rotate(calc(var(--m) * 6deg)) translateY(calc(var(--R, 66px) * -1.62));
+  transform-origin: 50% 0;
+}
+.intro__minutes i:nth-child(5n + 1) { height: 12px; width: 1.5px; }
+/* Allumés en luminescence, comme les index d'un cadran dans le noir. */
+.intro__minutes i.allume { opacity: 0.95; background: var(--c-lume); }
+html:not(.reduit) .intro__hex i { animation: arete var(--dur-vague) var(--ease-sortie) both; animation-delay: calc(var(--i) * 50ms + 80ms); }
+@keyframes arete {
+  from { transform: rotate(calc(var(--i) * 60deg)) translateX(var(--R)) rotate(120deg) scaleX(0); }
+  to { transform: rotate(calc(var(--i) * 60deg)) translateX(var(--R)) rotate(120deg) scaleX(1); }
+}
+.intro__cadran { --R: clamp(56px, 6vw, 76px); position: relative; display: grid; place-items: center; }
+.intro__compteur {
+  position: absolute; left: 50%; top: 50%; translate: -50% -50%;
+  font: 400 1rem var(--f-display); letter-spacing: 0.18em; font-variant-numeric: tabular-nums; color: var(--c-encre);
+}
+.intro__mot { display: flex; gap: 0.42em; font: 400 clamp(1.25rem, 2.4vw, 2rem) var(--f-display); letter-spacing: 0; }
+.intro__mot span { display: inline-block; overflow: clip; }
+.intro__mot i { display: inline-block; font-style: normal; }
+.intro__passer { position: absolute; bottom: calc(var(--rehaut) + var(--e-6)); left: 50%; translate: -50% 0; color: var(--c-encre-2); font-size: var(--t-petit); }
+
+/* ---- Tiroir panier ---- */
+.voile {
+  position: fixed; inset: 0; z-index: var(--z-panier); background: rgb(8 8 9 / 0.62);
+  opacity: 0; visibility: hidden;
+}
+.panier {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: calc(var(--z-panier) + 1);
+  width: min(460px, 100vw); display: grid; grid-template-rows: auto 1fr auto;
+  background: var(--c-fond-2); box-shadow: -1px 0 0 var(--c-filet), -40px 0 80px rgb(0 0 0 / 0.35);
+  visibility: hidden;   /* translation initiale posée par GSAP (drawer.js), jamais en CSS */
+}
+.panier__tete { display: flex; justify-content: space-between; align-items: center; padding: var(--e-6) var(--e-6) var(--e-4); }
+.panier__tete h2 { font: 400 0.9375rem var(--f-display); letter-spacing: 0.3em; text-transform: uppercase; }
+.panier__corps { overflow-y: auto; padding: 0 var(--e-6); overscroll-behavior: contain; }
+.panier__pied { padding: var(--e-5) var(--e-6) var(--e-6); border-top: var(--filet) solid var(--c-filet); display: grid; gap: var(--e-4); }
+.panier__vide { display: grid; justify-items: start; gap: var(--e-4); padding: var(--e-7) 0; }
+.panier__vide svg { width: 72px; height: auto; color: var(--c-encre-3); }
+.panier__vide strong { font: 500 var(--t-3) / 1.2 var(--f-texte); }
+.panier__vide p { color: var(--c-encre-2); max-width: 28ch; }
+/* Lignes du panier */
+.lignes { list-style: none; padding: 0; display: grid; }
+.ligne { display: grid; grid-template-columns: 96px 1fr; gap: var(--e-4); padding: var(--e-5) 0; border-bottom: var(--filet) solid var(--c-filet); }
+.ligne__vignette { width: 96px; height: 96px; border-radius: 12px; background: radial-gradient(70% 70% at 50% 45%, var(--c-fume-c), var(--c-fond)); object-fit: contain; }
+.ligne__texte { display: grid; gap: var(--e-1); align-content: start; }
+.ligne__nom { font-weight: 500; }
+.ligne__options, .ligne__gravure { font-size: var(--t-petit); color: var(--c-encre-2); }
+.ligne__bas { display: flex; justify-content: space-between; align-items: center; margin-top: var(--e-2); }
+.ligne__prix { font-weight: 500; }
+.ligne__retirer { justify-self: start; font-size: var(--t-petit); color: var(--c-encre-2); text-decoration: underline; text-decoration-color: var(--c-filet-fort); text-underline-offset: 0.22em; min-height: 36px; }
+.ligne__retirer:hover { color: var(--c-encre); }
+.quantite { display: inline-flex; align-items: center; border-radius: var(--r-pilule); box-shadow: inset 0 0 0 var(--filet) var(--c-filet-fort); }
+.quantite button { width: 40px; height: 40px; border-radius: 50%; font-size: 1.1rem; color: var(--c-encre); }
+.quantite button:disabled { opacity: 0.35; cursor: default; }
+.quantite span { min-width: 1.5em; text-align: center; }
+.panier__annule { display: flex; gap: var(--e-3); align-items: center; padding: var(--e-3) var(--e-4); margin-bottom: var(--e-3); border-radius: 12px; background: var(--c-fond-3); font-size: var(--t-petit); }
+.panier__totaux { display: grid; gap: var(--e-2); }
+.panier__totaux > div { display: flex; justify-content: space-between; }
+.panier__totaux dt { color: var(--c-encre-2); }
+.panier__totaux div:first-child dd { font: 500 var(--t-3) var(--f-texte); }
+.panier__commande { width: 100%; }
+.panier__demo { font-size: var(--t-legende); color: var(--c-encre-2); text-align: center; }
+
+/* Vignette qui vole de la montre au guichet du panier */
+.vol { position: fixed; z-index: calc(var(--z-nav) + 2); pointer-events: none; border-radius: 50%; will-change: transform; }
+
+.fermer { min-height: 44px; min-width: 44px; padding-inline: var(--e-3); border-radius: var(--r-pilule); display: inline-flex; align-items: center; justify-content: center; gap: var(--e-2); color: var(--c-encre-2); font-size: var(--t-petit); }
+.fermer:hover { color: var(--c-encre); }
+
+/* ---- Visuel d'attente : emplacement d'image designé tant que le fichier manque ---- */
+.visuel { position: relative; aspect-ratio: var(--ratio, 3 / 4); overflow: hidden; border-radius: var(--r-carte); background: var(--c-fond-2); }
+.visuel img, .visuel video { width: 100%; height: 100%; object-fit: cover; }
+.visuel::after { /* contour neutre : le bord de l'image ne se fond pas dans le fumé */
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+}
+/* Placeholder : un cadran fumé soleillé, le motif même de la maison, en attendant la photographie. */
+.visuel--attente {
+  background:
+    repeating-conic-gradient(from 0deg at 64% 36%, rgb(255 255 255 / 0.045) 0deg 0.7deg, transparent 0.7deg 2.2deg),
+    radial-gradient(90% 80% at 64% 36%, var(--c-fume-c) 0%, var(--c-fume-m) 48%, var(--c-fond-2) 100%);
+  display: grid; align-content: end; padding: var(--e-5);
+  box-shadow: inset 0 0 0 var(--filet) var(--c-filet);
+}
+.visuel--attente .visuel__legende { font: 500 var(--t-petit) / 1.4 var(--f-texte); color: var(--c-encre); }
+.visuel--attente .visuel__fichier { font: 400 var(--t-legende) / 1.7 var(--f-display); letter-spacing: 0.16em; color: var(--c-encre-2); margin-top: var(--e-1); word-break: break-all; }
+
+/* ---- Étroit ---- */
+@media (max-width: 719px) {
+  .nav { grid-template-columns: auto 1fr; }
+  .nav__liens { display: none; }
+  .nav .marque { grid-column: 1; grid-row: 1; font-size: 0.9375rem; }
+  .nav__droite { grid-column: 2; }
+  .nav__menu { display: inline-flex; min-height: 44px; align-items: center; font-size: var(--t-petit); }
+  .guichet__label { display: none; }
+  .panier__tete, .panier__corps, .panier__pied { padding-inline: var(--e-5); }
+}
+
+/* ---- Pied de page : commun à toutes les pages (ui/footer.js), donc dans la coquille.
+   Ces règles vivaient dans css/pages/introuvable.css, la feuille de la page 404. ---- */
+.pied {
+  position: relative; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--e-6) var(--e-5);
+  padding: var(--e-8) var(--marge) calc(var(--rehaut) + var(--e-7));
+  background: var(--c-fond); border-top: var(--filet) solid var(--c-filet);
+}
+.pied__marque { grid-column: 1 / span 4; display: grid; gap: var(--e-3); align-content: start; color: var(--c-encre-2); }
+.pied__marque .marque { color: var(--c-encre); justify-self: start; }
+.pied__liens { grid-column: 6 / span 3; display: grid; align-content: start; }
+/* 44 px de zone tactile : la pastille visible ne grossit pas, c'est la cible qui grandit. */
+.pied__liens a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; color: var(--c-encre-2); }
+.pied__liens a:hover { color: var(--c-encre); }
+.pied__lettre { grid-column: 9 / -1; display: grid; gap: var(--e-3); align-content: start; }
+.pied__lettre label { font-size: var(--t-petit); color: var(--c-encre); }
+.pied__champ { display: flex; gap: var(--e-2); }
+.pied__champ input {
+  flex: 1; min-width: 0; min-height: 48px; padding: 0 var(--e-4); border-radius: var(--r-pilule);
+  background: var(--c-fond-2); border: var(--filet) solid var(--c-filet-fort); color: var(--c-encre);
+}
+.pied__champ input::placeholder { color: var(--c-encre-2); }
+.pied__champ input[aria-invalid="true"] { border-color: var(--c-alerte); }
+.pied__message { font-size: var(--t-petit); min-height: 1.4em; color: var(--c-encre-2); }
+.pied__message[data-etat="erreur"] { color: var(--c-alerte); }
+.pied__demo { grid-column: 1 / -1; font-size: var(--t-petit); color: var(--c-encre-2); padding-top: var(--e-5); border-top: var(--filet) solid var(--c-filet); }
+
+@media (max-width: 719px) {
+  .pied { grid-template-columns: 1fr; }
+}

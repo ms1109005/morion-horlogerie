@@ -1,0 +1,155 @@
+/* MORION : collection. Salles (plein écran, la 3D occupe tout) et grille filtrable. */
+
+/* ---- Salles ---- */
+html.salles-actives, html.salles-actives body { overflow: hidden; }
+.salles { position: relative; height: 100dvh; overflow: hidden; }
+.salles__vignette {
+  position: fixed; inset: 0; z-index: var(--z-avant); pointer-events: none;
+  /* Le décor passe derrière le texte (gauche) et les index (droite) : il s'y assombrit. */
+  background:
+    linear-gradient(90deg, rgb(8 7 7 / 0.78) 0%, rgb(8 7 7 / 0.5) 24%, transparent 42%, transparent 62%, rgb(8 7 7 / 0.5) 80%, rgb(8 7 7 / 0.8) 100%),
+    radial-gradient(120% 90% at 50% 45%, transparent 55%, rgb(8 7 7 / 0.72) 100%);
+}
+.salles__ui { position: absolute; inset: 0; pointer-events: none; transition: opacity var(--dur-court) linear; }
+/* La surimpression éditoriale ouverte : la salle recule dans l'ombre, son texte s'efface. */
+.salles.edito-ouvert .salles__ui { opacity: 0; }
+.salles__ui > * { pointer-events: auto; }
+.salle {
+  position: absolute; left: var(--marge); bottom: calc(var(--rehaut) + 6.5rem); max-width: 30rem;
+  display: grid; gap: var(--e-3); justify-items: start;
+}
+.salle__titre { font-size: var(--t-1); }
+.salle__texte { color: var(--c-encre-2); max-width: 26rem; }
+.salle__prix { color: var(--c-encre-2); }
+.salle__prix .num { color: var(--c-encre); font-weight: 500; }
+/* Famille et caractéristiques sous le nom, en ligne de spécification (jamais en surtitre). */
+.salle__spec { font-size: var(--t-petit); color: var(--c-encre-2); margin-top: calc(var(--e-2) * -1); }
+.salle .actions { margin-top: var(--e-2); }
+
+/* Points de navigation : les index des salles, comme des index horaires. */
+.salles__points {
+  position: absolute; right: var(--marge); top: 50%; translate: 0 -50%;
+  display: grid; gap: var(--e-2);
+}
+.salles__points button {
+  display: flex; align-items: center; justify-content: flex-end; gap: var(--e-3); min-height: 40px;
+  font: 400 var(--t-legende) / 1 var(--f-display); letter-spacing: 0.24em; text-transform: uppercase; color: var(--c-encre-2);
+}
+.salles__points button::after { content: ''; width: 18px; height: 1px; background: var(--c-encre-2); transition: width var(--dur-court) var(--ease-echappement), background-color var(--dur-micro) linear; }
+.salles__points button:hover { color: var(--c-encre); }
+.salles__points button[aria-current="true"] { color: var(--c-encre); }
+.salles__points button[aria-current="true"]::after { width: 36px; height: 2px; background: var(--c-bleui); }
+.salles__fleches { position: absolute; right: var(--marge); bottom: calc(var(--rehaut) + 2.25rem); display: flex; gap: var(--e-2); }
+.salles__grille { position: absolute; left: var(--marge); bottom: calc(var(--rehaut) + 2.25rem); }
+
+/* Surimpression éditoriale claire : la seule bascule de thème du site, voulue. */
+.edito { position: fixed; inset: 0; z-index: calc(var(--z-panier) - 1); display: grid; justify-items: end; pointer-events: none; visibility: hidden; }
+.edito { transition: background-color var(--dur-moyen) linear; }
+.edito.ouvert { visibility: visible; pointer-events: auto; background: rgb(8 7 7 / 0.66); }
+.edito__carte {
+  position: relative; width: min(1040px, 100vw); height: 100dvh; overflow-y: auto; overscroll-behavior: contain;
+  background: var(--c-encre); color: var(--c-sur-encre);
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); align-items: center; gap: var(--e-6);
+  padding: calc(var(--rehaut) + 5rem) calc(var(--marge) + var(--e-4)) var(--e-7);
+}
+.edito__fermer { position: absolute; top: calc(var(--rehaut) + 1.25rem); right: var(--marge); color: #4a4642; }
+.edito__fermer:hover { color: var(--c-sur-encre); }
+.edito__rendu { width: 100%; height: auto; }
+.edito__texte { display: grid; gap: var(--e-4); justify-items: start; }
+.edito__texte h2 { font-size: var(--t-1); }
+.edito__spec { font-size: var(--t-petit); color: #4a4642; margin-top: calc(var(--e-3) * -1); }
+.edito__texte p { color: #4a4642; max-width: 34rem; }
+.edito .etiquette b { color: #4a4642; }
+.edito__finitions { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--e-3); width: 100%; }
+.edito__finitions a { display: grid; gap: 2px; text-decoration: none; font-size: var(--t-petit); padding: var(--e-2); border-radius: 12px; transition: background-color var(--dur-micro) linear; }
+.edito__finitions a:hover { background: rgb(21 20 20 / 0.06); }
+.edito__finitions img { width: 100%; height: auto; }
+.edito__finitions .num { color: #4a4642; }
+.btn--sombre { background: var(--c-sur-encre); color: var(--c-encre); }
+.btn--sombre:hover { background: #000; }
+
+/* ---- Grille ---- */
+.grille { padding: calc(var(--rehaut) + 7rem) var(--marge) var(--e-8); display: grid; align-content: start; gap: var(--e-6); background: var(--sol-fume); min-height: 100dvh; }
+.grille__entete { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--e-3) var(--e-6); }
+.grille__entete h1 { font-size: var(--t-1); }
+.grille__compte { color: var(--c-encre-2); }
+.grille__entete .lien-texte { margin-left: auto; }
+.filtres { display: flex; flex-wrap: wrap; gap: var(--e-4) var(--e-7); align-items: flex-start; }
+.filtres fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: var(--e-2); }
+.filtres legend { font: 400 var(--t-legende) / 1.6 var(--f-display); letter-spacing: 0.24em; text-transform: uppercase; color: var(--c-encre-2); padding: 0; }
+.puces { display: flex; flex-wrap: wrap; gap: var(--e-2); }
+.puce { position: relative; cursor: pointer; }
+.puce input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.puce span {
+  display: inline-flex; align-items: center; min-height: 40px; padding: 0 var(--e-4); border-radius: var(--r-pilule);
+  font-size: var(--t-petit); box-shadow: inset 0 0 0 var(--filet) var(--c-filet-fort); transition: box-shadow var(--dur-micro) linear;
+}
+.puce:hover span { box-shadow: inset 0 0 0 var(--filet) var(--c-encre-2); }
+.puce input:checked + span { box-shadow: inset 0 0 0 1.5px var(--c-bleui); color: var(--c-encre); }
+.puce input:focus-visible + span { outline: 1.5px solid var(--c-bleui); outline-offset: 3px; }
+.filtres__bas { display: flex; align-items: center; gap: var(--e-5); align-self: end; }
+/* Le tri portait le menu déroulant du système, opaque et à chevron gris, au milieu de pilules
+   à filet : le seul contrôle non habillé de la page. Même pilule, chevron maison. */
+.tri { position: relative; display: inline-flex; align-items: center; gap: var(--e-2); font-size: var(--t-petit); color: var(--c-encre-2); }
+.tri select {
+  appearance: none; -webkit-appearance: none;
+  min-height: 44px; padding: 0 var(--e-6) 0 var(--e-4); border-radius: var(--r-pilule);
+  background: none; border: 0; box-shadow: inset 0 0 0 var(--filet) var(--c-filet-fort);
+  color: var(--c-encre); font: inherit; cursor: pointer;
+  transition: box-shadow var(--dur-micro) linear;
+}
+.tri select:hover { box-shadow: inset 0 0 0 var(--filet) var(--c-encre-2); }
+.tri select:focus-visible { outline: 1.5px solid var(--c-bleui); outline-offset: 3px; }
+.tri select option { background: var(--c-fond-2); color: var(--c-encre); }
+/* Chevron dessiné, comme celui des accordéons de la fiche. */
+.tri::after {
+  content: ''; position: absolute; right: var(--e-4); top: 50%; width: 7px; height: 7px;
+  border-right: 1.5px solid var(--c-encre-2); border-bottom: 1.5px solid var(--c-encre-2);
+  rotate: 45deg; translate: 0 -70%; pointer-events: none;
+}
+
+.cartes { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--e-4); }
+.carte a {
+  display: grid; gap: 2px; padding: var(--e-4); border-radius: var(--r-carte); text-decoration: none;
+  background: radial-gradient(80% 70% at 50% 42%, rgb(74 67 62 / 0.55), rgb(26 29 34 / 0.6));
+  box-shadow: inset 0 0 0 var(--filet) var(--c-filet); transition: box-shadow var(--dur-micro) linear;
+}
+.carte a:hover, .carte a:focus-visible { box-shadow: inset 0 0 0 var(--filet) var(--c-encre-2); }
+.carte__vue { display: block; aspect-ratio: 1; margin-bottom: var(--e-3); }
+.carte__vue img { width: 100%; height: 100%; object-fit: contain; transition: opacity var(--dur-court) linear; }
+/* Au survol, la montre 3D du site vient se poser ici : le rendu fixe s'efface. */
+.carte a.en-3d .carte__vue img { opacity: 0; }
+.carte__nom { font-weight: 500; }
+.carte__fin, .carte__prix { font-size: var(--t-petit); color: var(--c-encre-2); }
+.grille__vide { display: grid; justify-items: start; gap: var(--e-4); padding: var(--e-6) 0; color: var(--c-encre-2); max-width: 44rem; }
+.grille__vide h2 { font-size: var(--t-2); color: var(--c-encre); }
+.grille__pistes { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: var(--e-2); }
+.grille__pistes button {
+  display: inline-flex; align-items: center; gap: var(--e-2); min-height: 40px; padding: 0 var(--e-4); border-radius: var(--r-pilule);
+  font-size: var(--t-petit); color: var(--c-encre); box-shadow: inset 0 0 0 var(--filet) var(--c-filet-fort);
+  transition: box-shadow var(--dur-micro) linear;
+}
+.grille__pistes button:hover { box-shadow: inset 0 0 0 var(--filet) var(--c-encre-2); }
+.grille__pistes .num { color: var(--c-bleui); }
+
+@media (max-width: 1100px) { .cartes { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 719px) {
+  /* Le texte occupe le bas de l'écran : le sol s'assombrit dessous pour rester lisible. */
+  .salles__vignette {
+    background:
+      linear-gradient(180deg, transparent 42%, rgb(8 7 7 / 0.55) 62%, rgb(8 7 7 / 0.86) 100%),
+      radial-gradient(120% 90% at 50% 45%, transparent 55%, rgb(8 7 7 / 0.72) 100%);
+  }
+  .salle { bottom: calc(var(--rehaut) + 8.5rem); right: var(--marge); }
+  .salle__titre { font-size: var(--t-2); }
+  .salles__points { top: auto; bottom: calc(var(--rehaut) + 5rem); right: var(--marge); left: var(--marge); translate: none; display: flex; justify-content: space-between; gap: var(--e-2); }
+  .salles__points button { flex-direction: column-reverse; align-items: flex-start; gap: var(--e-1); letter-spacing: 0.04em; font-size: var(--t-legende); }
+  .salles__fleches { display: none; }
+  .salles__grille { left: var(--marge); bottom: calc(var(--rehaut) + 1.5rem); }
+  .edito__carte { grid-template-columns: 1fr; align-items: start; padding-top: calc(var(--rehaut) + 4rem); }
+  .edito__rendu { width: min(70vw, 300px); justify-self: center; }
+  .edito__finitions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cartes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e-2); }
+  .carte a { padding: var(--e-3); }
+  .grille__entete .lien-texte { margin-left: 0; }
+}

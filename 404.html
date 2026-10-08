@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="fr" class="no-js">
+<head>
+<meta charset="utf-8">
+<script id="racine">
+  (function () {
+    // Dossier du site, même servi dans un sous-dossier : les URL relatives partent de là.
+    var p = location.pathname, i = p.search(/\/(collection|montre|commande)(\/|$)/);
+    var b = document.createElement('base');
+    b.href = i >= 0 ? p.slice(0, i + 1) : p.replace(/[^/]*$/, '');
+    document.head.appendChild(b);
+    var html = document.documentElement;
+    html.classList.replace('no-js', 'js');
+    try { if (sessionStorage.getItem('morion:intro')) html.classList.add('intro-vue'); } catch (e) {}
+    if (/[?&]mouvement=reduit/.test(location.search) || (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches)) html.classList.add('reduit');
+  })();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MORION, maison horlogère</title>
+<meta name="description" content="MORION compose des montres sport-luxe pièce par pièce : Prisme Chronographe 42, Monolithe 39, Abysse 41 GMT. Configurez la vôtre en 3D. Site de démonstration, aucune vente réelle.">
+<meta name="theme-color" content="#121213">
+<meta property="og:type" content="website">
+<meta property="og:title" content="MORION, maison horlogère">
+<meta property="og:description" content="Une montre se compose pièce par pièce. Configurateur 3D, site de démonstration.">
+<meta property="og:image" content="img/partage.jpg">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-52 -46 104 92'%3E%3Cpath d='M50 0 25 43.3h-50L-50 0l25-43.3h50z' fill='%23121213' stroke='%23eceae6' stroke-width='7'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600&family=Michroma&family=Syncopate:wght@400;700&display=swap">
+<script>
+  // Feuilles du site écrites après <base> : sur une route profonde (/montre/…), le préchargeur
+  // du navigateur les demanderait sinon à la mauvaise adresse.
+  document.write(['tokens', 'base', 'shell', 'pages/accueil', 'pages/collection', 'pages/montre', 'pages/commande', 'pages/introuvable']
+    .map(function (f) { return '<link rel="stylesheet" href="css/' + f + '.css">'; }).join(''));
+</script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"
+  }
+}
+</script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" integrity="sha384-g4NTh/Iv5PPU4xPyhEWqPcwtNXOvdaDI8LLnyYfyNZOjKJeYQyjzQ9X5275eBjpt" crossorigin="anonymous"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" integrity="sha384-Z3REaz79l2IaAZqJsSABtTbhjgOUYyV3p90XNnAPCSHg3EMTz1fouunq9WZRtj3d" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/lenis@1.3.17/dist/lenis.min.js" integrity="sha384-4EgXbGZLDwcPHcRGrHOxm1OvumWUqhr/ts6eapdZnak6ORZAsSE3fMd0niykaSkw" crossorigin="anonymous"></script>
+<script>document.write('<script type="module" src="js/main.js"><\/script>');</script>
+</head>
+<body>
+<a class="evitement" href="#page">Aller au contenu</a>
+
+<div class="fond" aria-hidden="true"><div class="fond__halo" id="halo"></div></div>
+
+<header class="nav" id="nav">
+  <nav class="nav__liens" aria-label="Navigation principale">
+    <a href="./" data-route="accueil">Accueil</a>
+    <a href="collection" data-route="collection">Collection</a>
+    <a href="montre/MOR-PR42-AC" data-route="montre">Composer</a>
+  </nav>
+  <a class="marque" href="./" data-route="accueil" aria-label="MORION, accueil">MORION</a>
+  <div class="nav__droite">
+    <button class="nav__menu" type="button" aria-expanded="false" aria-controls="menu">Menu</button>
+    <button class="guichet" type="button" aria-haspopup="dialog" aria-controls="panier" data-ouvrir-panier>
+      <svg class="guichet__icone" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M7 7V5.6a3 3 0 0 1 6 0V7"/><path d="M4.2 7h11.6l.7 9.2a1.4 1.4 0 0 1-1.4 1.5H4.9a1.4 1.4 0 0 1-1.4-1.5Z"/></svg>
+      <span class="sr">Écrin</span>
+      <span class="guichet__fen" aria-hidden="true"><span data-compte>0</span></span>
+      <span class="sr" data-compte-sr>, vide</span>
+    </button>
+  </div>
+</header>
+
+<main id="page" tabindex="-1"></main>
+
+<div class="rideau" aria-hidden="true"><div class="rideau__dalle"></div></div>
+<canvas id="scene" aria-hidden="true"></canvas>
+<div id="avant" aria-hidden="true"></div>
+<div class="rehaut" aria-hidden="true"><svg id="rehaut"></svg></div>
+
+<div class="menu" id="menu" role="dialog" aria-modal="true" aria-label="Menu" inert>
+  <a class="marque menu__marque" href="./" data-route="accueil" aria-label="MORION, accueil">MORION</a>
+  <button class="fermer menu__fermer" type="button" data-fermer-menu>Fermer</button>
+  <ul class="menu__liens">
+    <li><a href="./" data-route="accueil">Accueil</a></li>
+    <li><a href="collection" data-route="collection">Collection</a></li>
+    <li><a href="montre/MOR-PR42-AC" data-route="montre">Composer</a></li>
+  </ul>
+  <ul class="menu__familles" data-menu-familles></ul>
+</div>
+
+<div class="voile" data-voile></div>
+<aside class="panier" id="panier" role="dialog" aria-modal="true" aria-labelledby="panier-titre" data-lenis-prevent inert>
+  <div class="panier__tete">
+    <h2 id="panier-titre">Votre écrin</h2>
+    <button class="fermer" type="button" data-fermer-panier>Fermer</button>
+  </div>
+  <div class="panier__corps" data-panier-corps></div>
+  <div class="panier__pied" data-panier-pied hidden></div>
+</aside>
+
+<div class="intro" id="intro" aria-hidden="true">
+  <div class="intro__dalle"></div>
+  <div class="intro__contenu">
+    <div class="intro__cadran">
+      <div class="intro__minutes" data-minutes></div>
+      <div class="intro__hex"><i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i><i style="--i:4"></i><i style="--i:5"></i></div>
+      <span class="intro__compteur" data-compteur>000</span>
+    </div>
+    <div class="intro__mot"><span><i>M</i></span><span><i>O</i></span><span><i>R</i></span><span><i>I</i></span><span><i>O</i></span><span><i>N</i></span></div>
+  </div>
+  <button class="intro__passer" type="button" tabindex="-1">Passer</button>
+</div>
+
+<p id="annonce" class="sr" aria-live="polite"></p>
+
+<noscript>
+  <div class="sans-js">
+    <p class="marque">MORION</p>
+    <h1>Une montre se compose pièce par pièce.</h1>
+    <p>Le configurateur 3D demande JavaScript. Voici la collection, prix de départ TTC.</p>
+    <ul>
+      <li>Prisme Chronographe 42 : acier 19 800 €, céramique noire 25 600 €, or jaune 51 000 €, or rose 52 600 €</li>
+      <li>Monolithe 39 : acier 11 900 €, céramique noire 15 400 €, or jaune 32 500 €, or rose 33 900 €</li>
+      <li>Abysse 41 GMT : acier 14 500 €, céramique noire 18 900 €, or jaune 39 800 €, or rose 41 200 €</li>
+    </ul>
+    <p>Site de démonstration : aucune vente réelle.</p>
+  </div>
+</noscript>
+</body>
+</html>

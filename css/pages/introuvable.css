@@ -1,0 +1,31 @@
+/* MORION : pages simples (attente), page introuvable, bandeau de démonstration. */
+
+.page-simple {
+  min-height: 100dvh; display: grid; align-content: center; justify-items: start; gap: var(--e-4);
+  padding: calc(var(--rehaut) + 7rem) var(--marge) var(--e-8); max-width: 44rem;
+}
+.page-simple h1 { font-size: var(--t-1); }
+.page-simple__chapo { color: var(--c-encre-2); max-width: 32rem; margin-bottom: var(--e-4); }
+.page-simple__prix { font: 500 var(--t-2) var(--f-texte); margin-bottom: var(--e-4); }
+.page-simple--centre { justify-items: center; text-align: center; margin-inline: auto; }
+
+.bandeau-demo {
+  position: fixed; left: 50%; bottom: calc(var(--rehaut) + var(--e-4)); translate: -50% 0; z-index: var(--z-avant);
+  padding: var(--e-2) var(--e-4); border-radius: var(--r-pilule);
+  background: var(--c-fond-2); box-shadow: inset 0 0 0 var(--filet) var(--c-filet-fort);
+  font-size: var(--t-petit); color: var(--c-encre); white-space: nowrap;
+}
+
+.introuvable {
+  min-height: 100dvh; display: grid; align-content: center; justify-items: start; gap: var(--e-4);
+  padding: calc(var(--rehaut) + 6rem) var(--marge) var(--e-8); max-width: 38rem;
+}
+.introuvable h1 { font-size: var(--t-1); }
+.introuvable p:not(.imprime) { color: var(--c-encre-2); }
+
+/* Pied de page commun */
+
+@media (max-width: 719px) {
+  .pied > * { grid-column: 1 !important; }
+  .bandeau-demo { bottom: calc(var(--rehaut) + var(--e-3)); font-size: var(--t-legende); }
+}

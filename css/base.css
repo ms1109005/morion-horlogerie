@@ -1,0 +1,86 @@
+/* MORION : remise à zéro, typographie, focus, mode réduit. */
+
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; }
+
+html {
+  scrollbar-gutter: stable;           /* pas de saut quand le défilement se bloque */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  background: var(--c-fond);
+  overflow-x: clip;
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-filet-fort) var(--c-fond);
+}
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+.lenis.lenis-stopped { overflow: clip; }
+
+body {
+  min-height: 100dvh;
+  background: transparent;      /* le fond est celui de html ; le halo fumé (z -1) passe devant */
+  color: var(--c-encre);
+  font: 400 var(--t-corps) / 1.55 var(--f-texte);
+  font-kerning: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: clip;
+}
+
+[hidden] { display: none !important; }
+img, svg, video, canvas { display: block; max-width: 100%; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: 0; padding: 0; }
+a { color: inherit; text-decoration-thickness: var(--filet); text-underline-offset: 0.22em; }
+h1, h2, h3, h4 { font-weight: 500; line-height: 1.08; letter-spacing: -0.015em; text-wrap: balance; }
+p { text-wrap: pretty; }
+::selection { background: var(--c-bleui); color: var(--c-fond); }
+
+.num, .prix { font-variant-numeric: tabular-nums; }
+
+/* Impression de cadran : capitales larges, espacées, jamais sous 12 px. */
+.imprime {
+  font: 400 var(--t-legende) / 1.8 var(--f-display);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--c-encre-2);
+}
+
+:focus-visible {
+  outline: 1.5px solid var(--c-bleui);
+  outline-offset: 3px;          /* le contour suit l'arrondi de l'élément (pilules comprises) */
+}
+[tabindex="-1"]:focus-visible { outline: none; }
+
+.sr {
+  position: absolute !important;
+  width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%);
+  white-space: nowrap; border: 0;
+}
+
+.evitement {
+  position: fixed; left: var(--e-4); top: var(--e-4); z-index: 100;
+  padding: var(--e-3) var(--e-4); border-radius: var(--r-pilule);
+  background: var(--c-encre); color: var(--c-sur-encre); font-weight: 600; text-decoration: none;
+  transform: translateY(-160%);
+  transition: transform var(--dur-court) var(--ease-sortie);
+}
+.evitement:focus-visible { transform: none; }
+
+noscript .sans-js { padding: var(--e-8) var(--marge); max-width: 60rem; display: grid; gap: var(--e-4); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+html.reduit *, html.reduit *::before, html.reduit *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+}

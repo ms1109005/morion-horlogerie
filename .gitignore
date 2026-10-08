@@ -1,0 +1,9 @@
+﻿# Dépendances et caches
+.impeccable/
+__pycache__/
+*.pyc
+
+# Système
+.DS_Store
+Thumbs.db
+*.log

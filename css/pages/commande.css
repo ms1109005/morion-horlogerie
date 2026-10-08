@@ -1,0 +1,148 @@
+/* MORION : commande (tunnel en 3 étapes, récapitulatif) et confirmation (écrin). */
+
+/* Ici le bandeau reste visible sans couvrir les champs : collé sous la nav, pas posé en bas. */
+/* La bande est réservée en haut du flux : fond opaque, rien ne passe dessous. */
+.bandeau-demo.bandeau-demo--haut {
+  position: sticky; top: calc(var(--rehaut) + 4.75rem); bottom: auto; left: auto; translate: none;
+  width: max-content; margin: 0 auto var(--e-4); z-index: var(--z-dessus);
+  background: var(--c-fond); box-shadow: inset 0 0 0 var(--filet) var(--c-filet-fort), 0 10px 24px rgb(0 0 0 / 0.5);
+}
+.etape__titre, .merci__texte h1 { scroll-margin-top: calc(var(--rehaut) + 9rem); }
+
+.commande { padding: calc(var(--rehaut) + 7rem) var(--marge) calc(var(--rehaut) + 7rem); }
+.commande__entete { display: flex; align-items: baseline; justify-content: space-between; gap: var(--e-4); margin-bottom: var(--e-7); }
+.commande__entete h1 { font-size: var(--t-1); }
+.commande__cadran { font: 400 var(--t-legende) / 1 var(--f-display); letter-spacing: 0.24em; text-transform: uppercase; color: var(--c-encre-2); }
+.commande__cadran span { color: var(--c-encre); font-size: 1.5rem; letter-spacing: 0.06em; }
+.commande__corps { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--e-8); align-items: start; }
+
+/* Étapes : celle en cours ouverte, les faites repliées sur leur résumé, les suivantes en attente. */
+.commande__etapes { display: grid; }
+.etape { border-top: var(--filet) solid var(--c-filet); padding: var(--e-5) 0; }
+.etape:last-child { border-bottom: var(--filet) solid var(--c-filet); }
+.etape__tete { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: var(--e-1) var(--e-4); }
+/* Une étape à venir reste lisible : --c-encre-3 tombe à 3,46:1, sous le seuil d'un titre de
+   cette graisse. L'écart avec l'étape active passe par --c-encre (15,6:1), pas par l'effacement. */
+.etape__titre { font-size: var(--t-3); display: flex; align-items: baseline; gap: var(--e-3); color: var(--c-encre-2); transition: color var(--dur-micro) linear; }
+.etape--active .etape__titre, .etape--faite .etape__titre { color: var(--c-encre); }
+.etape__num { font: 400 var(--t-legende) / 1 var(--f-display); letter-spacing: 0.2em; color: var(--c-encre-2); }
+.etape--active .etape__num { color: var(--c-bleui); }
+.etape__resume { grid-column: 1; color: var(--c-encre-2); font-size: var(--t-petit); }
+.etape__resume:empty { display: none; }
+.etape__modifier { grid-column: 2; grid-row: 1; font-size: var(--t-petit); min-height: 44px; }
+.etape__corps { display: grid; gap: var(--e-5); padding-top: var(--e-5); }
+.etape__suite { justify-self: start; }
+.etape__alerte { color: var(--c-alerte); font-size: var(--t-petit); }
+.etape__alerte:empty { display: none; }
+.etape__total { color: var(--c-encre-2); }
+.etape__total .num { color: var(--c-encre); font-weight: 500; }
+
+.champs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e-4) var(--e-4); }
+.champ { display: grid; gap: var(--e-1); align-content: start; }
+.champ--large { grid-column: 1 / -1; }
+.champ label { font-size: var(--t-petit); color: var(--c-encre); }
+.champ__facultatif, .champ__aide { color: var(--c-encre-2); font-size: var(--t-legende); }
+.champ input {
+  min-height: 48px; padding: 0 var(--e-4); border-radius: 12px; font: inherit; color: var(--c-encre);
+  /* La bordure est le seul marqueur du champ : --c-filet-fort ne donne que 2,3:1 sur le fond
+     posé, sous le 3:1 de WCAG 1.4.11 pour un élément d'interface. */
+  background: var(--c-fond-2); border: var(--filet) solid var(--c-encre-3);
+  transition: border-color var(--dur-micro) linear, box-shadow var(--dur-micro) linear;
+}
+.champ input:hover { border-color: var(--c-encre-2); }
+.champ input:focus-visible { outline: none; border-color: var(--c-bleui); box-shadow: 0 0 0 3px rgb(109 131 255 / 0.25); }
+.champ input[aria-invalid="true"] { border-color: var(--c-alerte); }
+/* L'erreur garde la main sur le focus : sinon le halo bleu et la bordure rouge se mélangent. */
+.champ input[aria-invalid="true"]:focus-visible { border-color: var(--c-alerte); box-shadow: 0 0 0 3px rgb(255 138 107 / 0.28); }
+.champ__erreur { color: var(--c-alerte); font-size: var(--t-petit); }
+.champ__erreur:empty { display: none; }
+
+/* Espace de noms propre au tunnel. `.choix` appartient au configurateur (css/pages/montre.css)
+   et `.cartes` à la grille de la collection (css/pages/collection.css) : les deux sont chargées
+   avant celle-ci, donc réutiliser l'un de ces noms écrase leur mise en page sur tout le site. */
+.modes { border: 0; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e-3); }
+.modes__carte {
+  position: relative; display: grid; gap: var(--e-1); padding: var(--e-4); border-radius: var(--r-carte); cursor: pointer;
+  background: var(--c-fond-2); box-shadow: inset 0 0 0 var(--filet) var(--c-encre-3);
+  transition: box-shadow var(--dur-micro) linear, background-color var(--dur-micro) linear;
+}
+.modes__carte:hover { background: var(--c-fond-3); box-shadow: inset 0 0 0 var(--filet) var(--c-encre-2); }
+.modes__carte input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.modes__carte:has(input:checked) {
+  /* Acier bleui = état choisi, comme dans le configurateur et partout ailleurs. En blanc,
+     la carte choisie et la carte focalisée se disputaient la lecture. */
+  background: var(--c-fond-3); box-shadow: inset 0 0 0 1.5px var(--c-bleui), inset 0 0 0 5px var(--c-fond-3);
+}
+/* Pastille en guichet : le choix se lit aussi sans la couleur. */
+.modes__carte::after {
+  content: ''; position: absolute; top: var(--e-4); right: var(--e-4); width: 14px; height: 14px;
+  border-radius: 3px; rotate: 45deg; box-shadow: inset 0 0 0 1px var(--c-filet-fort);
+}
+.modes__carte:has(input:checked)::after { background: var(--c-encre); box-shadow: inset 0 0 0 1px var(--c-encre); }
+.modes__carte:has(input:focus-visible) { outline: 1.5px solid var(--c-bleui); outline-offset: 3px; }
+.modes__titre { padding-right: var(--e-5); }
+.modes__titre { font-weight: 500; }
+.modes__detail { font-size: var(--t-petit); color: var(--c-encre-2); text-wrap: pretty; }
+
+.salon { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: var(--e-4); align-items: end; }
+.salon__adresse { color: var(--c-encre-2); font-size: var(--t-petit); }
+
+/* Récapitulatif : fixe à côté du tunnel. */
+.recap {
+  position: sticky; top: calc(var(--rehaut) + 7rem); display: grid; gap: var(--e-4);
+  padding: var(--e-5); border-radius: var(--r-carte); background: var(--c-fond-2); box-shadow: inset 0 0 0 var(--filet) var(--c-filet);
+}
+.recap__titre { font: 400 var(--t-legende) / 1 var(--f-display); letter-spacing: 0.24em; text-transform: uppercase; color: var(--c-encre-2); }
+.recap__lignes { list-style: none; padding: 0; display: grid; gap: var(--e-4); }
+.recap__ligne { display: grid; grid-template-columns: 72px 1fr auto; gap: var(--e-3); align-items: start; }
+.recap__ligne img { width: 72px; height: 72px; object-fit: contain; border-radius: 12px; background: radial-gradient(80% 70% at 50% 42%, rgb(74 67 62 / 0.55), rgb(26 29 34 / 0.6)); }
+.recap__nom { font-weight: 500; font-size: var(--t-petit); }
+.recap__options { color: var(--c-encre-2); font-size: var(--t-legende); line-height: 1.5; text-wrap: pretty; }
+.recap__prix { font-size: var(--t-petit); }
+.recap__totaux { display: grid; gap: var(--e-2); border-top: var(--filet) solid var(--c-filet); padding-top: var(--e-4); margin: 0; }
+.recap__totaux div { display: flex; justify-content: space-between; gap: var(--e-4); font-size: var(--t-petit); color: var(--c-encre-2); }
+.recap__totaux dd { margin: 0; color: var(--c-encre); }
+.recap__total { font-size: 1.125rem !important; color: var(--c-encre) !important; padding-top: var(--e-2); }
+.recap__total dd { font-weight: 500; }
+.recap__note { font-size: var(--t-legende); color: var(--c-encre-2); }
+.recap__plier, .recap__replie { display: none; }
+
+/* ---- Confirmation ---- */
+.merci {
+  min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: var(--e-7);
+  padding: calc(var(--rehaut) + 7rem) var(--marge) calc(var(--rehaut) + 6rem);
+}
+.merci__texte { grid-column: 2; display: grid; gap: var(--e-4); justify-items: start; max-width: 34rem; }
+/* Repli sans 3D : la colonne de l'écrin n'existe pas, le texte prend toute la largeur. */
+.merci--sans-ecrin { grid-template-columns: 1fr; }
+.merci--sans-ecrin .merci__texte { grid-column: 1; }
+.merci__texte h1 { font-size: var(--t-1); }
+.merci__numero { display: grid; gap: var(--e-1); }
+.merci__numero span:last-child { font: 400 var(--t-legende) / 1 var(--f-display); letter-spacing: 0.24em; text-transform: uppercase; color: var(--c-encre-2); }
+.merci__numero .num { font: 400 clamp(1.5rem, 1rem + 1.6vw, 2.25rem) / 1 var(--f-display); letter-spacing: 0.08em; }
+.merci__chapo { color: var(--c-encre-2); text-wrap: pretty; }
+.merci__lignes { list-style: none; padding: 0; display: grid; gap: var(--e-2); width: 100%; border-top: var(--filet) solid var(--c-filet); padding-top: var(--e-4); }
+.merci__lignes li { display: flex; justify-content: space-between; gap: var(--e-4); font-size: var(--t-petit); }
+.merci__lignes li span:first-child { color: var(--c-encre-2); }
+.merci__total { font-weight: 500; border-top: var(--filet) solid var(--c-filet); padding-top: var(--e-2); }
+.merci__notes { display: grid; gap: var(--e-1); width: 100%; font-size: var(--t-petit); color: var(--c-encre-2); }
+
+@media (max-width: 719px) {
+  .commande { padding-top: calc(var(--rehaut) + 5.5rem); }
+  .commande__entete { margin-bottom: var(--e-5); }
+  .commande__corps { grid-template-columns: 1fr; gap: var(--e-6); }
+  /* Étroit : le récapitulatif est replié sur une ligne, le détail s'ouvre au besoin. */
+  .recap { position: static; order: -1; grid-template-columns: 1fr auto; align-items: baseline; }
+  .recap__titre { grid-column: 1; }
+  .recap__plier { display: inline-block; grid-column: 2; grid-row: 1; font-size: var(--t-petit); min-height: 44px; }
+  .recap__replie { display: block; grid-column: 1 / -1; font-size: 1.125rem; }
+  .recap__detail { grid-column: 1 / -1; display: none; }
+  .recap--ouvert .recap__detail { display: grid; gap: var(--e-4); }
+  .recap--ouvert .recap__replie { display: none; }
+  .commande__cadran { white-space: nowrap; font-size: var(--t-legende); }
+  .commande__cadran span { font-size: 1.125rem; }
+  .champs, .modes { grid-template-columns: 1fr; }
+  .salon { grid-template-columns: 1fr; }
+  .merci { grid-template-columns: 1fr; align-content: end; padding-top: 58vh; }
+  .merci__texte { grid-column: 1; }
+}

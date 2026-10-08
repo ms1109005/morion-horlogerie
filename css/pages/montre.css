@@ -1,0 +1,271 @@
+/* MORION : fiche produit et configurateur. */
+
+/* ---- Hero configurateur : la montre au centre (canvas), les commandes au-dessus ---- */
+.config { position: relative; height: 100dvh; min-height: 680px; }
+.config__ui { position: absolute; inset: 0; }
+.config__glisser {
+  position: absolute; left: 50%; top: 14%; width: min(44vw, 620px); height: 74%; translate: -50% 0;
+  cursor: grab; touch-action: pan-y; border-radius: 50%;
+}
+.config__glisser:active { cursor: grabbing; }
+.config__filets { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.config__filets polyline { fill: none; stroke: var(--c-filet-fort); stroke-width: 1; transition: stroke var(--dur-micro) linear; }
+.config__filets circle { fill: var(--c-encre); }
+.config__filets g { transition: opacity var(--dur-court) linear; }
+.config__filets g.actif polyline { stroke: var(--c-bleui); }
+.config__filets g.actif circle { fill: var(--c-bleui); }
+
+.config__entete { position: absolute; left: var(--marge); top: calc(var(--rehaut) + 6.5rem); max-width: 22rem; }
+.config__entete h1 { font-size: var(--t-2); }
+.config__type { color: var(--c-encre-2); margin-top: var(--e-2); }
+
+/* Pastilles : trois de chaque côté de la montre ; la sélection change instantanément. */
+.config__pastilles { position: absolute; inset: 0; pointer-events: none; }
+.pastille {
+  position: absolute; top: calc(27% + var(--rang) * 17%); pointer-events: auto;
+  display: grid; gap: 2px; min-height: 52px; padding: var(--e-2) var(--e-5); border-radius: var(--r-pilule);
+  background: rgb(26 29 34 / 0.72); box-shadow: inset 0 0 0 var(--filet) var(--c-filet-fort);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  text-align: left; max-width: 15.5rem;
+  transition: box-shadow var(--dur-micro) linear, background-color var(--dur-micro) linear;
+}
+.pastille--g { right: calc(50% + 16.5vw); text-align: right; justify-items: end; }
+.pastille--d { left: calc(50% + 16.5vw); }
+.pastille:hover { box-shadow: inset 0 0 0 var(--filet) var(--c-encre-2); }
+.pastille[aria-pressed="true"] { box-shadow: inset 0 0 0 1.5px var(--c-bleui); background: rgb(34 38 52 / 0.85); }
+.pastille__nom { font: 400 var(--t-legende) / 1.6 var(--f-display); letter-spacing: 0.24em; text-transform: uppercase; color: var(--c-encre); }
+.pastille__valeur { font-size: var(--t-petit); color: var(--c-encre-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 13rem; }
+
+/* Plateau d'options de la zone active */
+.config__plateau {
+  position: absolute; left: 50%; bottom: calc(var(--rehaut) + 2.25rem); translate: -50% 0;
+  /* Le plateau est centré, le bloc d'achat est calé à droite : la demi-largeur du plateau ne
+     doit jamais dépasser la place que l'achat laisse libre. Avec 44vw, les options mordaient
+     sur le prix sur toute la bande 900 à 1400 px (21 px de recouvrement mesurés à 1280). */
+  width: min(620px, calc(100vw - 2 * (min(21rem, 26vw) + var(--marge) + 1.5rem)));
+  display: grid; gap: var(--e-4);
+}
+.groupe { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: var(--e-2); }
+.groupe__legende { font: 400 var(--t-legende) / 1.6 var(--f-display); letter-spacing: 0.24em; text-transform: uppercase; color: var(--c-encre-2); padding: 0; }
+.groupe__aide { font-size: var(--t-petit); color: var(--c-encre-2); }
+.choix { display: flex; flex-wrap: wrap; gap: var(--e-2); }
+.choix__item {
+  position: relative; display: inline-flex; align-items: center; gap: var(--e-2);
+  min-height: 44px; padding: var(--e-1) var(--e-4) var(--e-1) var(--e-1); border-radius: var(--r-pilule);
+  background: rgb(26 29 34 / 0.72); box-shadow: inset 0 0 0 var(--filet) var(--c-filet);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  cursor: pointer; font-size: var(--t-petit); transition: box-shadow var(--dur-micro) linear;
+}
+.choix--pilule .choix__item { padding-left: var(--e-4); }
+.choix__item:hover { box-shadow: inset 0 0 0 var(--filet) var(--c-encre-2); }
+.choix__item input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.choix__item:has(input:checked) { box-shadow: inset 0 0 0 1.5px var(--c-bleui); }
+.choix__item:has(input:focus-visible) { outline: 1.5px solid var(--c-bleui); outline-offset: 3px; }
+.choix__teinte { width: 34px; height: 34px; border-radius: 50%; background: var(--teinte); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18), inset 0 -6px 10px rgb(0 0 0 / 0.25); flex: none; }
+.choix__nom { white-space: nowrap; }
+.choix__ecart { color: var(--c-encre-2); font-size: var(--t-legende); white-space: nowrap; }
+.choix__ecart:empty { display: none; }
+
+/* Nuancier : un groupe dont aucun choix ne change le prix (couleur du cadran, coloris du
+   bracelet). Six noms plus six « inclus » faisaient trois rangées, qui remontaient le plateau
+   sur la montre et sur les ancres. Une seule surface, une seule rangée, et le nom du choix actif
+   se lit dans la légende. La zone tactile reste à 44 px autour d'une nuance de 34 px. */
+.groupe__valeur { color: var(--c-encre); text-transform: none; letter-spacing: 0.02em; }
+.groupe__valeur::before { content: '· '; color: var(--c-filet-fort); }
+.choix--nuance {
+  flex-wrap: nowrap; gap: 2px; width: max-content; max-width: 100%; padding: 4px;
+  border-radius: var(--r-pilule); background: rgb(26 29 34 / 0.72);
+  box-shadow: inset 0 0 0 var(--filet) var(--c-filet);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+.choix--nuance .choix__item {
+  padding: 5px; gap: 0; border-radius: 50%; background: none; box-shadow: none;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+/* Le nom reste dans le document (il nomme le bouton radio) sans occuper de place. */
+.choix--nuance .choix__nom, .choix--nuance .choix__ecart {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+.choix--nuance .choix__item:hover { box-shadow: inset 0 0 0 var(--filet) var(--c-encre-2); }
+.choix--nuance .choix__item:has(input:checked) { box-shadow: inset 0 0 0 1.5px var(--c-bleui); }
+.gravure { display: flex; align-items: center; gap: var(--e-3); }
+.gravure input {
+  flex: 1; min-width: 0; min-height: 48px; padding: 0 var(--e-5); border-radius: var(--r-pilule);
+  background: rgb(26 29 34 / 0.8); border: var(--filet) solid var(--c-filet-fort); color: var(--c-encre);
+  font: 500 1rem var(--f-texte); letter-spacing: 0.06em;
+}
+.gravure input:focus-visible { border-color: var(--c-bleui); outline: none; }
+.gravure input::placeholder { color: var(--c-encre-2); letter-spacing: 0; }
+.gravure__compte { font-size: var(--t-legende); color: var(--c-encre-2); min-width: 3.5rem; text-align: right; }
+
+/* Achat : prix, détail, actions */
+.config__achat { position: absolute; right: var(--marge); bottom: calc(var(--rehaut) + 2.25rem); width: min(21rem, 26vw); display: grid; gap: var(--e-3); justify-items: start; }
+.config__prix { display: flex; align-items: baseline; gap: var(--e-3); flex-wrap: wrap; }
+.config__prix .prix { font: 500 var(--t-1) / 1 var(--f-texte); letter-spacing: -0.02em; }
+.config__ecart { font-size: var(--t-petit); color: var(--c-lume); opacity: 0; }
+.config__ecart[data-sens="moins"] { color: var(--c-encre-2); }
+.config__detail summary { cursor: pointer; font-size: var(--t-petit); color: var(--c-encre-2); list-style: none; display: inline-flex; min-height: 44px; align-items: center; }
+.config__detail summary::-webkit-details-marker { display: none; }
+.config__detail summary::after { content: ''; width: 6px; height: 6px; margin-left: var(--e-2); border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; rotate: 45deg; translate: 0 -2px; transition: rotate var(--dur-court) var(--ease-sortie); }
+.config__detail[open] summary::after { rotate: -135deg; translate: 0 2px; }
+/* Le détail ouvert s'affiche là où est la pastille Gravure : elle s'efface le temps de la lecture. */
+.config__ui:has(.config__detail[open]) .pastille[data-zone="gravure"],
+.config__ui:has(.config__detail[open]) .config__filets g[data-zone="gravure"] { opacity: 0; pointer-events: none; }
+/* Le détail s'ouvre en panneau au-dessus du bloc d'achat, sans pousser le prix sur les pastilles. */
+.config__detail dl {
+  position: absolute; right: 0; bottom: calc(100% + var(--e-3)); z-index: 3;
+  display: grid; gap: var(--e-1); width: min(22rem, 30vw); padding: var(--e-4) var(--e-5);
+  font-size: var(--t-petit); color: var(--c-encre-2);
+  background: rgb(21 24 28 / 0.96); border-radius: var(--r-carte);
+  box-shadow: inset 0 0 0 var(--filet) var(--c-filet-fort), 0 24px 60px rgb(0 0 0 / 0.45);
+}
+.config__detail dl > div { display: flex; justify-content: space-between; gap: var(--e-4); }
+.config__detail dd { color: var(--c-encre); }
+.detail__total { border-top: var(--filet) solid var(--c-filet); padding-top: var(--e-2); margin-top: var(--e-1); color: var(--c-encre); }
+.config__actions { display: flex; gap: var(--e-2); flex-wrap: wrap; }
+.config__note { font-size: var(--t-legende); color: var(--c-encre-2); }
+.config__ref { position: absolute; left: var(--marge); bottom: calc(var(--rehaut) + 2.25rem); text-align: left; }
+
+/* Tablette et petit portable : centré, le plateau n'a que la place laissée des deux côtés par
+   le bloc d'achat, alors que rien ne l'occupe à gauche. Calé à gauche, il récupère le double. */
+@media (min-width: 720px) and (max-width: 1100px) {
+  .config__plateau {
+    left: var(--marge); translate: none;
+    width: calc(100% - 2 * var(--marge) - min(21rem, 26vw) - 1.5rem);
+  }
+}
+
+/* ---- Éclaté court (section épinglée) ---- */
+.eclate-court { position: relative; height: 100dvh; display: grid; align-items: center; padding: 0 var(--marge); }
+.eclate-court__texte { position: relative; max-width: 26rem; display: grid; gap: var(--e-6); }
+.eclate-court h2 { font-size: var(--t-2); }
+.eclate-court__etapes { list-style: none; padding: 0; display: grid; gap: var(--e-5); }
+.eclate-court__etapes li { display: grid; gap: var(--e-1); padding-left: var(--e-5); border-left: var(--filet) solid var(--c-filet); color: var(--c-encre-2); transition: color var(--dur-court) linear; }
+.eclate-court__etapes li b { position: relative; font-weight: 500; color: var(--c-encre-2); transition: color var(--dur-court) linear; }
+/* L'étape active porte un index du réhaut, en acier bleui. */
+.eclate-court__etapes li b::before {
+  content: ''; position: absolute; left: calc(var(--e-5) * -1 - 1px); top: 50%; width: 12px; height: 2px;
+  background: var(--c-bleui); transform: scaleX(0); transform-origin: left; transition: transform var(--dur-court) var(--ease-echappement);
+}
+.eclate-court__etapes li.actif { color: var(--c-encre); }
+.eclate-court__etapes li.actif b { color: var(--c-encre); }
+.eclate-court__etapes li.actif b::before { transform: scaleX(1); }
+
+/* ---- Au poignet ---- */
+.poignet { padding: var(--e-9) var(--marge) var(--e-8); background: var(--sol-fume); display: grid; gap: var(--e-6); }
+.poignet h2, .fiche h2, .autres h2 { font-size: var(--t-2); }
+.poignet__galerie { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--e-4); align-items: end; }
+.poignet__galerie .visuel { max-height: 68dvh; }
+.poignet__vue--0 { grid-column: 1 / span 5; }
+.poignet__vue--1 { grid-column: 6 / span 4; margin-bottom: 12%; }
+.poignet__vue--2 { grid-column: 10 / span 3; }
+/* Deux vues seulement : la grande à gauche, la seconde décalée vers le bas à droite. */
+.poignet__galerie:not(:has(.poignet__vue--2)) .poignet__vue--0 { grid-column: 1 / span 6; }
+.poignet__galerie:not(:has(.poignet__vue--2)) .poignet__vue--1 { grid-column: 8 / span 5; margin: 0 0 -8%; }
+
+/* ---- Matière ---- */
+.matiere { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--e-5); align-items: center; padding: var(--e-7) var(--marge); background: var(--sol-fume); }
+/* La photo de matière est le sujet du bloc : en vignette portrait elle ne pouvait pas porter
+   la lumière rasante que le texte annonce. */
+.matiere__vue { grid-column: 1 / span 7; --ratio: 4 / 3; }
+.matiere__texte { grid-column: 9 / -1; display: grid; gap: var(--e-3); }
+.matiere__texte h2 { font-size: var(--t-2); }
+.matiere__texte p { color: var(--c-encre-2); max-width: 34rem; }
+
+/* ---- Fiche technique ---- */
+.fiche { padding: var(--e-8) var(--marge); background: var(--sol-fume); display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--e-5); }
+/* Le titre accompagne l'ouverture des groupes au lieu de s'effacer en haut, et la colonne
+   porte la référence : elle restait vide sur la moitié de l'écran. */
+.fiche__entete { grid-column: 1 / span 4; position: sticky; top: calc(var(--rehaut) + 7rem); align-self: start; display: grid; gap: var(--e-4); justify-items: start; }
+.fiche__ref { text-align: left; }
+.fiche__groupes { grid-column: 5 / -1; display: grid; }
+.fiche__groupe { border-top: var(--filet) solid var(--c-filet); }
+.fiche__groupe:last-child { border-bottom: var(--filet) solid var(--c-filet); }
+.fiche__groupe summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; min-height: 60px; font: 500 var(--t-3) var(--f-texte); }
+.fiche__groupe summary::-webkit-details-marker { display: none; }
+.fiche__groupe summary::after { content: ''; width: 9px; height: 9px; border-right: 1.5px solid var(--c-encre-2); border-bottom: 1.5px solid var(--c-encre-2); rotate: 45deg; transition: rotate var(--dur-court) var(--ease-sortie); }
+.fiche__groupe[open] summary::after { rotate: -135deg; }
+.fiche__groupe dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e-4) var(--e-6); padding: var(--e-2) 0 var(--e-6); }
+.fiche__groupe dt { font-size: var(--t-petit); color: var(--c-encre-2); }
+.fiche__groupe dd { margin: var(--e-1) 0 0; }
+
+/* ---- Service ---- */
+.service { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--e-6); padding: var(--e-7) var(--marge); background: var(--sol-fume); border-top: var(--filet) solid var(--c-filet); }
+.service h3 { font-size: var(--t-3); font-weight: 500; }
+.service p { color: var(--c-encre-2); margin-top: var(--e-2); max-width: 26rem; }
+
+/* ---- Autres familles ---- */
+.autres { padding: var(--e-8) var(--marge) var(--e-9); background: var(--sol-fume); display: grid; gap: var(--e-6); }
+.autres__cartes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e-5); }
+.autre {
+  display: grid; gap: var(--e-1); padding: var(--e-5); border-radius: var(--r-carte); text-decoration: none;
+  background: radial-gradient(80% 70% at 50% 40%, var(--c-fume-m), var(--c-fond-2));
+  box-shadow: inset 0 0 0 var(--filet) var(--c-filet);
+  transition: box-shadow var(--dur-micro) linear;
+}
+.autre:hover { box-shadow: inset 0 0 0 var(--filet) var(--c-encre-2); }
+.autre img { width: min(100%, 360px); height: auto; justify-self: center; transition: transform var(--dur-moyen) var(--ease-sortie); }
+.autre:hover img { transform: rotate(-4deg) scale(1.03); }
+.autre__nom { font: 500 var(--t-3) var(--f-texte); }
+.autre__prix { color: var(--c-encre-2); font-variant-numeric: tabular-nums; }
+
+/* ---- Étroit ---- */
+@media (max-width: 719px) {
+  /* Un seul écran, comme sur ordinateur : la montre en haut, les commandes empilées en bas. */
+  .config { height: 100dvh; min-height: 640px; }
+  .config__ui {
+    position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end;
+    gap: var(--e-3); padding: 0 var(--marge) calc(var(--rehaut) + 0.75rem);
+  }
+  .config__glisser { top: 10dvh; height: 34dvh; width: 80vw; }
+  .config__type { font-size: var(--t-petit); margin-top: 0; }
+  .groupe { gap: var(--e-1); }
+  .choix__teinte { width: 30px; height: 30px; }
+  .config__filets { display: none; }
+  .config__entete, .config__plateau, .config__achat, .config__ref { position: static; translate: none; width: auto; max-width: none; }
+  .config__entete { order: 1; }
+  .config__entete h1 { font-size: var(--t-3); }
+  /* Le réhaut est le cadre imprimé du monde : une rangée qui déborde s'y fond au lieu de le
+     recouvrir, et la coupe se lit alors comme une invitation à faire défiler. */
+  .config__pastilles, .config__plateau .choix {
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--marge), #000 calc(100% - var(--marge)), transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 var(--marge), #000 calc(100% - var(--marge)), transparent 100%);
+  }
+  .config__pastilles { order: 2; position: static; display: flex; gap: var(--e-2); overflow-x: auto; scrollbar-width: none; margin-inline: calc(var(--marge) * -1); padding: 0 var(--marge); pointer-events: auto; scroll-snap-type: x proximity; scroll-padding-inline: var(--marge); }
+  .pastille, .config__plateau .choix__item { scroll-snap-align: start; }
+  /* Le nuancier tient en entier : il garde sa surface, donc pas de fondu ni de défilement. */
+  .config__plateau .choix--nuance { -webkit-mask-image: none; mask-image: none; }
+  .pastille { position: static; flex: none; min-height: 44px; text-align: left; justify-items: start; padding: var(--e-2) var(--e-4); }
+  .pastille__valeur { display: none; }
+  .config__plateau { order: 3; }
+  .choix { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: calc(var(--marge) * -1); padding: 2px var(--marge); scroll-snap-type: x proximity; scroll-padding-inline: var(--marge); }
+  .choix__item { flex: none; }
+  /* Le nuancier tient en entier à 390 : il garde sa surface, sans défilement ni débord. */
+  .choix--nuance { overflow: visible; margin-inline: 0; padding: 4px; }
+  /* Barre d'achat collante : prix et ajout toujours à portée de pouce pendant la composition. */
+  .config__achat {
+    order: 4; position: relative; inset: auto; z-index: 2;
+    grid-template-columns: 1fr auto; align-items: center; gap: var(--e-2) var(--e-3);
+    padding: var(--e-3) var(--e-3) var(--e-3) var(--e-5); border-radius: 28px;
+    background: rgb(19 22 26 / 0.88); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    box-shadow: inset 0 0 0 var(--filet) var(--c-filet-fort);
+  }
+  .config__prix .prix { font-size: var(--t-3); }
+  .config__note, .config__ecart { display: none; }
+  .config__detail { grid-column: 1; grid-row: 2; }
+  .config__detail summary { min-height: 28px; }
+  .config__detail dl { width: calc(100vw - 2 * var(--marge)); right: auto; left: calc(var(--e-5) * -1); }
+  .config__actions { grid-column: 2; grid-row: 1 / span 2; flex-direction: column; align-items: stretch; gap: var(--e-1); }
+  .config__actions .btn--plein { padding-inline: var(--e-4); }
+  .config__actions .btn--trait { min-height: 32px; box-shadow: none; font-size: var(--t-petit); text-decoration: underline; text-decoration-color: var(--c-filet-fort); }
+  .config__ref { display: none; }
+  .eclate-court { align-items: end; padding-bottom: var(--e-8); }
+  .poignet__galerie { display: flex; align-items: flex-start; overflow-x: auto; scroll-snap-type: x mandatory; gap: var(--e-3); margin-inline: calc(var(--marge) * -1); padding: 0 var(--marge); scrollbar-width: none; }
+  .poignet__galerie > * { flex: 0 0 78vw; scroll-snap-align: center; margin: 0; }
+  .matiere, .fiche, .service { grid-template-columns: 1fr; }
+  .matiere__vue, .matiere__texte, .fiche__entete, .fiche__groupes { grid-column: 1; }
+  .fiche__entete { position: static; }
+  .matiere__vue { --ratio: 4 / 3; }
+  .fiche__groupe dl { grid-template-columns: 1fr; }
+  .autres__cartes { grid-template-columns: 1fr; }
+}
