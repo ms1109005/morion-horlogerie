@@ -2,6 +2,7 @@
 // Unités en mm. Cadran face à +Z, 12 h = +Y, couronne à +X.
 import * as THREE from 'three';
 import { caseMaterial, sapphireMaterial, darkMaterial, printMaterial } from './materials.js';
+import { IMPRESSION, suivre } from './textures.js';
 
 // Cotes verticales partagées avec le cadran et le mouvement.
 export const Z = {
@@ -236,7 +237,7 @@ function buildPrisme(config, q) {
   }
   const marks = mesh(
     new THREE.RingGeometry(13.2, 15.4, curve, 1),
-    printMaterial(backMarks('PR42'), 'back-PR42'),
+    printMaterial(() => backMarks('PR42'), 'back-PR42'),
     'caseback-marks',
   );
   marks.rotation.y = Math.PI;
@@ -291,7 +292,7 @@ function ringText(key, n, words) {
     ctx.fillText(ch, 0, 0);
     ctx.restore();
   });
-  const t = new THREE.CanvasTexture(cv);
+  const t = suivre(new THREE.CanvasTexture(cv));
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 8;
   ringCache.set(key, t);
@@ -367,7 +368,7 @@ function casebackParts(config, z, rOuter, rWindow, q, family) {
   w.renderOrder = 2;
   parts['caseback-crystal'] = w;
   const marks = mesh(new THREE.RingGeometry(rWindow + 0.8, rOuter - 1.2, 96, 1),
-    printMaterial(backMarks(family), `back-${family}`), 'caseback-marks');
+    printMaterial(() => backMarks(family), `back-${family}`), 'caseback-marks');
   marks.rotation.y = Math.PI;
   marks.position.z = z.back - 0.01;
   parts['caseback-marks'] = marks;
@@ -436,7 +437,8 @@ const ring24Cache = new Map();
 function ringScale24(bg, ink) {
   const key = `${bg}${ink}`;
   if (ring24Cache.has(key)) return ring24Cache.get(key);
-  const n = 2048;
+  const n = IMPRESSION;
+  const s = n / 2048;
   const cv = document.createElement('canvas');
   cv.width = cv.height = n;
   const ctx = cv.getContext('2d');
@@ -453,6 +455,7 @@ function ringScale24(bg, ink) {
     ctx.save();
     ctx.translate(c + Math.sin(a) * r, c - Math.cos(a) * r);
     ctx.rotate(a);
+    ctx.scale(s, s); // repères et chiffres dessinés pour 2048 px
     if (h === 0) {
       ctx.beginPath();
       ctx.moveTo(0, 48); ctx.lineTo(-44, -40); ctx.lineTo(44, -40); ctx.closePath();
@@ -464,7 +467,7 @@ function ringScale24(bg, ink) {
     }
     ctx.restore();
   }
-  const t = new THREE.CanvasTexture(cv);
+  const t = suivre(new THREE.CanvasTexture(cv));
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 8;
   ring24Cache.set(key, t);

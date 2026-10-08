@@ -164,6 +164,9 @@ html[data-encre="sombre"] .rehaut .cinq { stroke: rgb(28 24 16 / 0.62); }
 .rideau__dalle::before { left: 0; }
 .rideau__dalle::after, .intro__dalle::after { right: 0; }
 html.reduit .rideau__dalle { transform: translate(-50%, -50%) rotate(30deg); opacity: 0; }
+/* Hors transition, la dalle (240 × 320 vmax : ~6000 × 8000 px sur iPhone) gardait son calque GPU
+   toute la visite, rangée hors champ. Elle n'existe que pendant le rideau. */
+.rideau:not(.actif) .rideau__dalle { display: none; }
 
 /* ---- Intro ---- */
 .intro { position: fixed; inset: 0; z-index: var(--z-intro); overflow: hidden; display: grid; place-items: center; cursor: pointer; }

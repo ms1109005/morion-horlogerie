@@ -150,9 +150,11 @@ export function lumeMaterial() {
 
 // Impressions (logo, graduations, gravures) : opaques avec bord lissé par alpha-to-coverage,
 // pour être vues à travers une glace à transmission (qui ne rend que les objets opaques).
+// `texture` : une texture, ou une fonction qui la dessine (appelée seulement si la matière n’est
+// pas encore en cache : chaque reconstruction du cadran redessinait sinon un canvas pour rien).
 export function printMaterial(texture, key) {
   return cached(`print:${key}`, () => new THREE.MeshStandardMaterial({
-    map: texture, alphaToCoverage: true, roughness: 0.5, metalness: 0,
+    map: typeof texture === 'function' ? texture() : texture, alphaToCoverage: true, roughness: 0.5, metalness: 0,
     polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4,
   }));
 }

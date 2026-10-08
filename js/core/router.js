@@ -13,7 +13,7 @@ const LOADERS = {
   introuvable: () => import('../pages/notfound.js'),
 };
 
-export function createRouter({ root, outlet, front, transition, app, onRoute, beforeLeave }) {
+export function createRouter({ root, outlet, front, transition, app, onRoute, beforeLeave, afterCleanup }) {
   let current = null; // { match, url, mod, cleanup }
   let busy = false;
   let queued = null;
@@ -49,6 +49,8 @@ export function createRouter({ root, outlet, front, transition, app, onRoute, be
       await transition.cover();
       try { current?.cleanup?.(); } catch (e) { console.warn(e); }
       window.ScrollTrigger.getAll().forEach((t) => t.kill());
+      // Page démontée, la suivante pas encore montée : moment de rendre la mémoire graphique.
+      try { afterCleanup?.(); } catch (e) { console.warn(e); }
     } else {
       if (cfg) await app.director.setConfig(cfg);
       app.director.pose(mod.pose, { immediate: true });

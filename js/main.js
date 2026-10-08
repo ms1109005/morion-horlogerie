@@ -10,7 +10,7 @@ import { defaultConfig } from './store/config.js';
 import { createCart } from './store/cart.js';
 import { DIAL_FONT } from './watch/dial.js';
 import {
-  brushedLinear, polishSmudge, tapisserieNormal, azurageNormal, perlageNormal, cotesNormal,
+  brushedLinear, polishSmudge, tapisserieNormal, azurageNormal, perlageNormal, cotesNormal, libererGPU,
 } from './watch/textures.js';
 import { createRehaut } from './ui/rehaut.js';
 import { createTransition } from './ui/transition.js';
@@ -119,6 +119,9 @@ const router = createRouter({
   transition: createTransition($('.rideau'), { reduced }),
   app,
   beforeLeave: () => { drawer.close({ restore: false }); nav.fermerMenu(); },
+  // Les textures des montres de la page quittée (salles, vitrine, autres familles) restent sinon
+  // au GPU toute la visite : sur iPhone la mémoire finit par déborder et Safari ferme la page.
+  afterCleanup: () => { if (stage) libererGPU(stage.scene); },
   onRoute: (match, { first, title }) => {
     nav.setActive(match.name);
     if (!first) annonce(`Page : ${title}`);

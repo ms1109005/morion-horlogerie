@@ -1,0 +1,3 @@
+# Netlify : toute route du site (/collection, /montre/MOR-PR42-AC…) est servie par index.html
+# avec un statut 200. Les fichiers existants (css, js, img, video) passent avant cette règle.
+/*  /index.html  200

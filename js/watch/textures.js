@@ -3,6 +3,27 @@
 import * as THREE from 'three';
 
 const cache = new Map();
+
+// Impressions (cadran, réhaut, lunette 24 h) : 2048 px sur grand écran. Sur téléphone le cadran
+// mesure ~200 px à l’écran ; une 2048² y coûte ~22 Mo de mémoire graphique pour rien, et Safari
+// iOS ferme la page quand la mémoire déborde. 1024 y reste plus fin que l’écran.
+export const IMPRESSION = typeof window !== 'undefined' && window.innerWidth < 720 ? 1024 : 2048;
+
+// Registre de toutes les textures générées par le site : libererGPU() rend au GPU celles qu’aucun
+// objet de la scène n’utilise (le canvas reste en cache, three.js la renvoie au GPU si elle resert).
+const registre = new Set();
+export const suivre = (t) => { registre.add(t); return t; };
+
+export function libererGPU(scene) {
+  const utilisees = new Set();
+  scene.traverse((o) => {
+    [o.material].flat().forEach((m) => m && Object.values(m).forEach((v) => { if (v?.isTexture) utilisees.add(v); }));
+  });
+  let n = 0;
+  registre.forEach((t) => { if (!utilisees.has(t)) { t.dispose(); n += 1; } });
+  return n;
+}
+
 const cached = (key, make) => {
   if (!cache.has(key)) cache.set(key, make());
   return cache.get(key);
@@ -33,7 +54,7 @@ function makeNoise(seed = 1) {
 }
 
 function toTexture(cv, { color = false, repeat = false } = {}) {
-  const t = new THREE.CanvasTexture(cv);
+  const t = suivre(new THREE.CanvasTexture(cv));
   t.colorSpace = color ? THREE.SRGBColorSpace : THREE.NoColorSpace;
   t.anisotropy = 8;
   if (repeat) t.wrapS = t.wrapT = THREE.RepeatWrapping;

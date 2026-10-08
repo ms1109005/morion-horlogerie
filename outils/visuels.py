@@ -2,7 +2,8 @@
 
 Le site ne demande jamais un fichier absent : il lit js/data/visuels-presents.js, généré ici.
 Déposer un fichier au bon nom (extension libre parmi celles ci-dessous) suffit : serve.py
-relance ce script à chaque chargement de page.
+relance ce script à chaque chargement de page. Une vidéo allégée déposée sous le même nom dans
+video/mobile/ est servie aux écrans étroits (720p : 3 à 5 fois plus légère).
 
     python outils/visuels.py              régénère la liste
     python outils/visuels.py --optimiser  convertit les images lourdes en WebP (2000 px max)
@@ -37,12 +38,26 @@ def lister():
     return presents
 
 
+def lister_mobiles(presents):
+    """{ nom : chemin } des vidéos de video/mobile/ dont l'originale est présente."""
+    base = os.path.join(ROOT, "video", "mobile")
+    mobiles = {}
+    for nom in sorted(os.listdir(base)) if os.path.isdir(base) else []:
+        racine, ext = os.path.splitext(nom)
+        if ext.lower() in DOSSIERS["video"] and presents.get(racine, "").startswith("video/"):
+            mobiles[racine] = f"video/mobile/{nom}"
+    return mobiles
+
+
 def ecrire():
     presents = lister()
+    mobiles = lister_mobiles(presents)
     texte = (
         "// Généré par outils/visuels.py (relancé par serve.py) : ne pas éditer à la main.\n"
         "// Visuels réellement déposés dans img/ et video/, par nom de fichier sans extension.\n"
         f"export const PRESENTS = {json.dumps(presents, indent=2, ensure_ascii=False)};\n"
+        "// Versions allégées (video/mobile/) servies aux écrans étroits.\n"
+        f"export const MOBILES = {json.dumps(mobiles, indent=2, ensure_ascii=False)};\n"
     )
     ancien = open(SORTIE, encoding="utf-8").read() if os.path.exists(SORTIE) else ""
     if texte != ancien:
