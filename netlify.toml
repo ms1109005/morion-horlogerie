@@ -1,0 +1,6 @@
+# Netlify : seul le site part en ligne, pas les fichiers de travail (_sources/, docs/, tests/).
+# `netlify deploy --build` (ou un dépôt relié) lance le script ; à la main :
+#   python3 outils/publier.py  puis  netlify deploy --dir=_publie --prod
+[build]
+  command = "python3 outils/publier.py"
+  publish = "_publie"

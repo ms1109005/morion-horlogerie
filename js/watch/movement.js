@@ -2,6 +2,7 @@
 // Vu côté fond (−Z). Cotes Z : platine −1.4..−0.2, rouages ≈ −2, ponts −3.4..−2.4, rotor −4.4..−3.8.
 import * as THREE from 'three';
 import { movementMaterial } from './materials.js';
+import { suivre } from './textures.js';
 
 const deg = (d) => (d * Math.PI) / 180;
 
@@ -51,6 +52,29 @@ function ext(shape, depth, bevel = 0, curve = 48) {
 }
 
 const named = (obj, name) => { obj.name = name; return obj; };
+
+// Gravure du calibre : la même sur toutes les montres, dessinée une fois. Recréée à chaque montre,
+// sa texture 1024² n’était jamais libérée (une de plus par montre construite, page après page).
+let gravureMat = null;
+function gravureMaterial() {
+  if (gravureMat) return gravureMat;
+  const engr = document.createElement('canvas');
+  engr.width = engr.height = 1024;
+  const ctx = engr.getContext('2d');
+  ctx.fillStyle = '#d9b36a';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '700 58px Syncopate, system-ui';
+  if ('letterSpacing' in ctx) ctx.letterSpacing = '10px';
+  ctx.fillText('MORION', 512, 440);
+  ctx.font = '400 30px Syncopate, system-ui';
+  ctx.fillText('CALIBRE MR-01  ·  33 RUBIS', 512, 520);
+  const engrTex = suivre(new THREE.CanvasTexture(engr));
+  engrTex.colorSpace = THREE.SRGBColorSpace;
+  engrTex.anisotropy = 8;
+  gravureMat = new THREE.MeshStandardMaterial({ map: engrTex, alphaToCoverage: true, metalness: 1, roughness: 0.25, polygonOffset: true, polygonOffsetUnits: -4 });
+  return gravureMat;
+}
 
 export function buildMovement(config, q = 'high') {
   const fam = config.family;
@@ -206,24 +230,7 @@ export function buildMovement(config, q = 'high') {
   parts.fentes = slots;
 
   // Gravure dorée du calibre sur le pont de rouage (lue depuis le fond).
-  const engr = document.createElement('canvas');
-  engr.width = engr.height = 1024;
-  const ctx = engr.getContext('2d');
-  ctx.fillStyle = '#d9b36a';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font = '700 58px Syncopate, system-ui';
-  if ('letterSpacing' in ctx) ctx.letterSpacing = '10px';
-  ctx.fillText('MORION', 512, 440);
-  ctx.font = '400 30px Syncopate, system-ui';
-  ctx.fillText('CALIBRE MR-01  ·  33 RUBIS', 512, 520);
-  const engrTex = new THREE.CanvasTexture(engr);
-  engrTex.colorSpace = THREE.SRGBColorSpace;
-  engrTex.anisotropy = 8;
-  const engraving = named(new THREE.Mesh(
-    new THREE.PlaneGeometry(13, 13),
-    new THREE.MeshStandardMaterial({ map: engrTex, alphaToCoverage: true, metalness: 1, roughness: 0.25, polygonOffset: true, polygonOffsetUnits: -4 }),
-  ), 'gravure-calibre');
+  const engraving = named(new THREE.Mesh(new THREE.PlaneGeometry(13, 13), gravureMaterial()), 'gravure-calibre');
   engraving.rotation.set(0, Math.PI, deg(-40));
   engraving.position.set(5.2, 4.6, -3.42);
   parts['gravure-calibre'] = engraving;

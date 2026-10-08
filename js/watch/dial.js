@@ -4,6 +4,7 @@ import {
   dialMaterial, subdialMaterial, appliqueMaterial, lumeMaterial, printMaterial, darkMaterial,
 } from './materials.js';
 import { Z } from './case.js';
+import { IMPRESSION, suivre } from './textures.js';
 
 export const DIAL_FONT = 'Syncopate';
 const INK = { noir: '#efece6', bleu: '#eef0f4', fume: '#f1e6d8', vert: '#eef2ec', saumon: '#1d1a18', argent: '#1c1d20' };
@@ -33,7 +34,7 @@ function printCanvas(n, draw) {
   const cv = document.createElement('canvas');
   cv.width = cv.height = n;
   draw(cv.getContext('2d'), n);
-  const t = new THREE.CanvasTexture(cv);
+  const t = suivre(new THREE.CanvasTexture(cv));
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 8;
   return t;
@@ -76,7 +77,7 @@ function counterPrint(ink, ticks, labels, key) {
 
 // Marquages principaux (logo, lignes) sur toute la surface du cadran.
 function dialPrint(family, ink, R) {
-  return printCanvas(2048, (ctx, n) => {
+  return printCanvas(IMPRESSION, (ctx, n) => {
     const mm = n / (2 * R);
     const at = (y) => n / 2 - y * mm;
     ctx.fillStyle = ink;
@@ -115,8 +116,9 @@ function flangeGeometry(r0, r1, rise, zz) {
 
 function flangePrint(family, color) {
   const ink = INK[color];
-  return printCanvas(2048, (ctx, n) => {
+  return printCanvas(IMPRESSION, (ctx, n) => {
     const c = n / 2;
+    const s = n / 2048; // traits et chiffres dessinés pour 2048 px
     const [r0, r1] = FLANGE[family];
     const inner = (r0 / r1) * c, outer = c;
     ctx.fillStyle = FLANGE_BG[color];
@@ -133,13 +135,13 @@ function flangePrint(family, color) {
       const five = family === 'PR42' ? i % 20 === 0 : i % 5 === 0;
       const len = five ? 0.34 : sec ? 0.22 : 0.12;
       const rA = inner + (outer - inner) * 0.08, rB = rA + (outer - inner) * len;
-      ctx.lineWidth = five ? 5 : sec ? 3 : 2;
+      ctx.lineWidth = (five ? 5 : sec ? 3 : 2) * s;
       ctx.beginPath();
       ctx.moveTo(c + Math.sin(a) * rA, c - Math.cos(a) * rA);
       ctx.lineTo(c + Math.sin(a) * rB, c - Math.cos(a) * rB);
       ctx.stroke();
     }
-    ctx.font = `700 34px ${DIAL_FONT}, system-ui`;
+    ctx.font = `700 ${34 * s}px ${DIAL_FONT}, system-ui`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     for (let k = 1; k <= 12; k++) {
@@ -152,6 +154,35 @@ function flangePrint(family, color) {
       ctx.restore();
     }
   });
+}
+
+// Réhaut et disque de date : une matière par famille et teinte, partagée par toutes les montres.
+// Recréées à chaque reconstruction du cadran, elles n’étaient jamais libérées (une texture 2048²
+// de plus à chaque changement de cadran).
+const flangeMats = new Map();
+function flangeMaterial(family, color) {
+  const key = `${family}:${color}`;
+  if (!flangeMats.has(key)) {
+    flangeMats.set(key, new THREE.MeshStandardMaterial({ map: flangePrint(family, color), roughness: 0.55, metalness: 0.2 }));
+  }
+  return flangeMats.get(key);
+}
+
+let dateMat = null;
+function dateMaterial() {
+  dateMat ??= new THREE.MeshStandardMaterial({
+    roughness: 0.6,
+    map: printCanvas(256, (ctx, n) => {
+      ctx.fillStyle = '#f4f2ed';
+      ctx.fillRect(0, 0, n, n);
+      ctx.fillStyle = '#16161a';
+      ctx.font = `700 118px ${DIAL_FONT}, system-ui`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('17', n / 2, n / 2 + 6);
+    }),
+  });
+  return dateMat;
 }
 
 // Index appliqués (bâtons facettés) + inserts luminescents, en InstancedMesh.
@@ -253,22 +284,13 @@ export function buildDial(config, q = 'high') {
     const disc = new THREE.Mesh(new THREE.CylinderGeometry(4.3, 4.3, 0.1, 64), subdialMaterial(config.dialColor));
     disc.rotation.x = Math.PI / 2;
     disc.position.z = z.dial - 0.36;
-    sd.add(disc, printDisc(4.2, counterPrint(ink, ticks, labels, `sub${i}${config.dialColor}`), `sub${ticks}${config.dialColor}`, z.dial - 0.3));
+    sd.add(disc, printDisc(4.2, () => counterPrint(ink, ticks, labels, `sub${i}${config.dialColor}`), `sub${ticks}${config.dialColor}`, z.dial - 0.3));
     sd.position.set(x, y, 0);
     parts[`subdial-${hour}`] = sd;
   });
 
   // Disque de date sous le guichet.
-  const dateTex = printCanvas(256, (ctx, n) => {
-    ctx.fillStyle = '#f4f2ed';
-    ctx.fillRect(0, 0, n, n);
-    ctx.fillStyle = '#16161a';
-    ctx.font = `700 118px ${DIAL_FONT}, system-ui`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('17', n / 2, n / 2 + 6);
-  });
-  const date = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 3.4), new THREE.MeshStandardMaterial({ map: dateTex, roughness: 0.6 }));
+  const date = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 3.4), dateMaterial());
   date.name = 'date-window';
   date.position.set(dxw, dyw, z.dial - 0.4);
   date.rotation.z = aw;
@@ -278,7 +300,7 @@ export function buildDial(config, q = 'high') {
   const [f0, f1, rise] = FLANGE[fam];
   const flange = new THREE.Mesh(
     flangeGeometry(f0, f1, rise, z.dial),
-    new THREE.MeshStandardMaterial({ map: flangePrint(fam, config.dialColor), roughness: 0.55, metalness: 0.2 }),
+    flangeMaterial(fam, config.dialColor),
   );
   flange.name = 'flange';
   parts.flange = flange;
@@ -301,7 +323,7 @@ export function buildDial(config, q = 'high') {
   if (fam === 'AB41') parts.indices.add(diveIndices(config, z.dial, R));
 
   // Marquages.
-  parts.logo = printDisc(R, dialPrint(fam, ink, R), `dial-${fam}-${config.dialColor}`, z.dial + 0.005);
+  parts.logo = printDisc(R, () => dialPrint(fam, ink, R), `dial-${fam}-${config.dialColor}`, z.dial + 0.005);
   parts.logo.name = 'logo';
 
   Object.values(parts).forEach((p) => group.add(p));

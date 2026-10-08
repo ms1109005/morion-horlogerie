@@ -131,7 +131,7 @@ function renderAccueil() {
       ${FINITIONS_FINALE.map((f, i) => html`
       <li class="finale__place">
         <a class="finale__zone" href="montre/MOR-PR42-${f}" data-place="${i}">
-          <span class="finale__vue" data-vue></span>
+          <span class="finale__vue" data-vue><img class="finale__rendu" src="img/rendus/mor-pr42-${f.toLowerCase()}.webp" alt="" width="800" height="800" loading="lazy" decoding="async"></span>
           <span class="finale__nom">${FINISHES[f].nom}</span>
           <span class="finale__prix num">${formatPrice(PR.base[f])}</span>
           <span class="finale__choisir" aria-hidden="true">Choisir</span>
@@ -169,8 +169,13 @@ export default {
 
     // Finale : quatre Prisme construits au repos (précompilés : ils compilent aussi les matières
     // or et céramique que la montre du directeur prendra dans les chapitres).
-    const vitrine = app.stage ? createVitrine(app.stage) : null;
+    // Écran étroit : pas de vitrine. Quatre montres de plus doublaient la mémoire graphique de la
+    // page (~200 Mo) et Safari iOS fermait l’onglet en cours de défilement. Les chapitres et le
+    // seuil passent alors par la montre du directeur (qui change de matière), la finale montre
+    // les rendus fixes des quatre finitions.
+    const vitrine = app.stage && !etroit ? createVitrine(app.stage) : null;
     offs.push(() => vitrine?.dispose());
+    $('[data-finale]').classList.toggle('finale--images', !vitrine);
     offs.push(monterFinale(el, app, vitrine));
 
     if (app.reduced || !d.watch) {

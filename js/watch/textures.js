@@ -3,6 +3,27 @@
 import * as THREE from 'three';
 
 const cache = new Map();
+
+// Impressions (cadran, réhaut, lunette 24 h) : 2048 px sur grand écran. Sur téléphone le cadran
+// mesure ~200 px à l’écran ; une 2048² y coûte ~22 Mo de mémoire graphique pour rien, et Safari
+// iOS ferme la page quand la mémoire déborde. 1024 y reste plus fin que l’écran.
+export const IMPRESSION = typeof window !== 'undefined' && window.innerWidth < 720 ? 1024 : 2048;
+
+// Registre de toutes les textures générées par le site : libererGPU() rend au GPU celles qu’aucun
+// objet de la scène n’utilise (le canvas reste en cache, three.js la renvoie au GPU si elle resert).
+const registre = new Set();
+export const suivre = (t) => { registre.add(t); return t; };
+
+export function libererGPU(scene) {
+  const utilisees = new Set();
+  scene.traverse((o) => {
+    [o.material].flat().forEach((m) => m && Object.values(m).forEach((v) => { if (v?.isTexture) utilisees.add(v); }));
+  });
+  let n = 0;
+  registre.forEach((t) => { if (!utilisees.has(t)) { t.dispose(); n += 1; } });
+  return n;
+}
+
 const cached = (key, make) => {
   if (!cache.has(key)) cache.set(key, make());
   return cache.get(key);
@@ -33,7 +54,7 @@ function makeNoise(seed = 1) {
 }
 
 function toTexture(cv, { color = false, repeat = false } = {}) {
-  const t = new THREE.CanvasTexture(cv);
+  const t = suivre(new THREE.CanvasTexture(cv));
   t.colorSpace = color ? THREE.SRGBColorSpace : THREE.NoColorSpace;
   t.anisotropy = 8;
   if (repeat) t.wrapS = t.wrapT = THREE.RepeatWrapping;
@@ -158,24 +179,27 @@ export const azurageNormal = (n = 512, rings = 42) => cached(`azu${n}${rings}`, 
   return toTexture(heightToNormal(h, n, 2.4));
 });
 
-// Perlage : grains circulaires qui se chevauchent (platine du mouvement).
-export const perlageNormal = (n = 1024, step = 34) => cached(`per${n}${step}`, () => {
+// Perlage : grains circulaires qui se chevauchent (platine du mouvement). C'est la texture la plus
+// longue à calculer au chargement (~0,3 s d'un bloc) : sur téléphone elle est tirée en 512 px, à
+// motif identique (grains, anneaux et relief mis à l'échelle k), quatre fois moins de calcul.
+export const perlageNormal = (n = IMPRESSION / 2, step = 34 * (n / 1024)) => cached(`per${n}${step}`, () => {
+  const k = n / 1024;
   const h = new Float32Array(n * n);
   const rad = step * 0.78;
   for (let cy = 0; cy < n + step; cy += step * 0.72) {
     for (let cx = 0; cx < n + step; cx += step * 0.72) {
-      const ox = cx + (Math.random() - 0.5) * 4, oy = cy + (Math.random() - 0.5) * 4;
+      const ox = cx + (Math.random() - 0.5) * 4 * k, oy = cy + (Math.random() - 0.5) * 4 * k;
       for (let y = Math.floor(oy - rad); y < oy + rad; y++) {
         for (let x = Math.floor(ox - rad); x < ox + rad; x++) {
           const d = Math.hypot(x - ox, y - oy);
           if (d > rad) continue;
           const xx = (x + n) % n, yy = (y + n) % n;
-          h[yy * n + xx] = (Math.sin(d * 0.9) * 0.5 + 0.5) * (1 - d / rad) + (1 - d / rad) * 0.4;
+          h[yy * n + xx] = (Math.sin((d * 0.9) / k) * 0.5 + 0.5) * (1 - d / rad) + (1 - d / rad) * 0.4;
         }
       }
     }
   }
-  return toTexture(heightToNormal(h, n, 1.6), { repeat: true });
+  return toTexture(heightToNormal(h, n, 1.6 * k), { repeat: true });
 });
 
 // Côtes de Genève : bandes ondulées parallèles (ponts du mouvement).

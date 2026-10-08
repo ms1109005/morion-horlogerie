@@ -196,6 +196,13 @@
   text-decoration: none; border-radius: var(--r-carte);
 }
 .finale__vue { display: block; width: 100%; height: var(--vue-h); }
+/* Sans vitrine 3D (écran étroit, ou sans WebGL) : le rendu fixe de chaque finition. */
+.finale__rendu { display: none; }
+.finale--images .finale__rendu, .sans-3d .finale__rendu {
+  display: block; width: 100%; height: 100%; object-fit: contain;
+  transition: scale var(--dur-court) var(--ease-echappement);
+}
+.finale--images .finale__zone:is(:hover, :focus-visible) .finale__rendu { scale: 1.05; }
 .finale__nom { font-weight: 500; }
 .finale__prix { font-size: var(--t-petit); color: var(--c-encre-2); }
 /* Bouton rond « Choisir » : il sort sous la montre choisie. */

@@ -205,3 +205,36 @@ Rehaussements tirés des challengers du tirage impeccable (clé `87aada4e`) :
 - **D32.** Galerie « Au poignet » de la fiche : la vidéo passe du bout de la rangée au milieu,
   entre les deux photographies. En dernière position elle se lisait comme une pièce rapportée ;
   au centre, et décalée vers le haut par la grille existante, elle tient le rythme de la galerie.
+- **D33.** Mémoire sur téléphone. Safari iOS fermait l'accueil en cours de défilement (« Un
+  problème est survenu à plusieurs reprises ») : mesurée à 390 px, la page montait à cinq
+  montres, ~290 Mo de textures et 503 000 triangles par image à la finale. Corrections :
+  - écran étroit sans **vitrine** : chapitres et seuil passent par la montre du directeur (qui
+    change de matière), la finale montre les rendus `img/rendus/mor-pr42-*.webp` ;
+  - **impressions** (cadran, réhaut, lunette 24 h) en 1024 px sous 720 px de large au lieu de
+    2048 (`IMPRESSION` dans `textures.js`) : le cadran y mesure ~200 px à l'écran ;
+  - **fuites** : matières du réhaut, de la date et de la gravure du calibre partagées au lieu
+    d'être recréées (une texture 2048² de plus à chaque changement de cadran, une 1024² par
+    montre construite) ; les marquages ne sont plus dessinés quand leur matière est en cache ;
+  - **changement de page** : les textures qu'aucun objet de la scène n'utilise sont rendues au
+    GPU (`libererGPU`, appelé par le routeur entre démontage et montage) ;
+  - la **dalle du rideau** (240 × 320 vmax) n'existe plus hors transition (calque permanent).
+  Résultat à 390 px : une montre, ~55 Mo de textures, 79 000 triangles ; le nombre de textures
+  ne croît plus en changeant de cadran ni de page.
+- **D34.** Publication : `outils/publier.py` prépare `_publie/` (index, 404, `_redirects`, css,
+  js, img, video : 14 Mo) et Netlify publie ce dossier (`netlify.toml`) ; `_sources/`, `docs/`
+  et `tests/` restent hors ligne. `_redirects` sert toute route par `index.html` en 200 (une
+  route profonde répondait par la copie `404.html`, statut 404). Photographies converties en
+  WebP par `outils/visuels.py --optimiser` (7,3 Mo → 0,9 Mo, originaux dans
+  `_sources/visuels-originaux/`) ; vidéos 720p dans `video/mobile/`, servies sous 720 px de
+  large par `<source media>` (atelier 2,7 → 0,8 Mo, poignet 6,8 → 1,2 Mo).
+- **D35.** Fiche : le bloc d'achat devient une **carte** (fond et filet des pastilles), prix en
+  `--t-2` et « Détail du prix » sur la même ligne, actions dessous, mention en pied. Le prix flottait
+  en 52 px au-dessus de quatre lignes empilées : sous 760 px de haut (portables), le bloc montait sur
+  la pastille Gravure (mesuré à 1536 × 730, 1366 × 680, 1280 × 680, 1024 × 700). La carte (~148 px)
+  laisse la pastille libre dès 680 px, hauteur minimale du hero. Sa largeur est une variable
+  (`--achat-l`) que le plateau d'options reprend ; entre 720 et 1100 px elle s'élargit pour garder
+  ses deux boutons sur une ligne, et la référence du coin bas gauche, recouverte par le plateau
+  calé à gauche, s'efface comme sur mobile.
+- **D36.** Chargement sur téléphone : le perlage (la plus longue des textures calculées pendant
+  l'intro, ~0,3 s d'un bloc) est tiré en 512 px à motif identique (grains, anneaux et relief à
+  l'échelle) : 268 → 78 ms mesurés.
