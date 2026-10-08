@@ -219,7 +219,7 @@ html:not(.reduit) .intro__hex i { animation: arete var(--dur-vague) var(--ease-s
   overflow: hidden; transition: color var(--dur-micro) linear, border-color var(--dur-micro) linear;
 }
 /* Le filet du bas suit le chargement : on voit ce qu'on s'épargne. */
-.intro__passer::after { content: ""; position: absolute; left: 0; bottom: 0; height: 1px; width: 100%; background: var(--c-encre); transform-origin: 0 50%; transform: scaleX(var(--p, 0)); }
+.intro__passer::after { content: ""; position: absolute; left: 18px; bottom: 5px; height: 1px; width: calc(100% - 36px); background: var(--c-encre); transform-origin: 0 50%; transform: scaleX(var(--p, 0)); }
 .intro__passer:hover, .intro__passer:focus-visible { color: var(--c-encre); border-color: rgb(242 243 244 / 0.4); }
 .intro__passer kbd { font: inherit; font-size: .85em; letter-spacing: .06em; padding: 2px 7px; border: 1px solid rgb(242 243 244 / 0.2); border-radius: 4px; text-transform: none; }
 @media (hover: none) { .intro__passer kbd { display: none; } }
