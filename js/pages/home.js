@@ -12,7 +12,6 @@ import { defaultConfig, encode, price, formatPrice } from '../store/config.js';
 import { FAMILIES, FINISHES, OPTIONS } from '../data/catalogue.js';
 import { CHAPITRES, etapeAssemblage, chapitreDe } from '../data/pieces.js';
 import { createVitrine, FINITIONS_FINALE } from '../stage/vitrine.js';
-import { createCouloir } from '../stage/couloir.js';
 import { POSES, POSES_ETROIT } from '../stage/director.js';
 import { DUR, EASE } from '../core/motion.js';
 
@@ -89,6 +88,9 @@ function renderAccueil() {
   </section>
 
   <section class="seuil" data-seuil aria-labelledby="seuil-titre">
+    <div class="seuil__cristal" aria-hidden="true">
+      <video data-cristal muted playsinline preload="auto" poster="img/cristal.webp"></video>
+    </div>
     <div class="seuil__texte au-dessus" data-seuil-texte>
       <h2 id="seuil-titre">Trois salles, une par famille.</h2>
       <p>Le hall en quartz fumé, puis le Prisme, le Monolithe et l’Abysse, chacune dans le décor de sa forme.</p>
@@ -185,8 +187,10 @@ export default {
     }
 
     const { ScrollTrigger } = window;
-    const couloir = createCouloir(app.stage);
-    offs.push(() => couloir.dispose());
+    // Seuil : la plongée dans le cristal de morion, filmée avec une image clé par frame pour que
+    // le défilement la parcoure librement. La montre part devant et disparaît en son cœur.
+    const cristal = monterCristal(el.querySelector('[data-cristal]'), etroit);
+    offs.push(cristal.dispose);
     const pieces = createPieces(front.querySelector('[data-pieces]'), {
       stage: app.stage, director: d, etroit, compteur: $('.assemblage__compteur'),
     });
@@ -364,7 +368,7 @@ export default {
     });
     offs.push(() => premierMot.kill());
 
-    // 4. Seuil : couloir d’arches ; la montre part devant et disparaît au point de fuite.
+    // 4. Seuil : la plongée dans le cristal ; la montre part devant et disparaît en son cœur.
     const seuil = $('[data-seuil]');
     const texteSeuil = $('[data-seuil-texte]');
     const effetsSeuil = (p) => {
@@ -374,23 +378,22 @@ export default {
     };
     segment({ trigger: seuil, start: 'top bottom', end: 'top top' }, (p) => {
       montrer(melange({ ...P.chapitre }, P.seuil, gsap.parseEase('power2.inOut')(p)));
-      couloir.avancer(0, pas(0.3, 1, p));
+      cristal.avancer(0, pas(0.3, 1, p));
       texteSeuil.style.opacity = '0';
     });
     segment({ trigger: seuil, start: 'top top', end: '+=150%', pin: true }, (p) => {
       const fuite = gsap.parseEase('power2.in')(pas(0, 0.75, p));
       montrer({ ...P.seuil, taille: P.seuil.taille * (1 - fuite * 0.93) * (1 - pas(0.6, 0.78, p)), y: P.seuil.y * (1 - fuite) });
-      // Au bout du couloir, les arches s’estompent : le texte reste seul.
-      couloir.avancer(p, 1 - 0.65 * pas(0.62, 0.9, p));
+      // Au cœur du cristal, l'image s'assombrit : le texte reste seul devant la lumière.
+      cristal.avancer(pas(0, 0.8, p), 1, pas(0.6, 0.9, p));
       effetsSeuil(p);
     }, { quitter: effetsSeuil });
-    // Le couloir éclaire le haut de l'écran : la nav remonte son encre secondaire, comme sur
+    // Le cristal éclaire le haut de l'écran : la nav remonte son encre secondaire, comme sur
     // l'aplat acier, sinon « Collection » et « Composer » se perdent dans les filets.
     const stCouloir = ScrollTrigger.create({
       trigger: seuil, start: 'top bottom', end: '+=250%',
       onToggle: (st) => {
         html0.classList.toggle('couloir', st.isActive);
-        if (!st.isActive) couloir.afficher(false);
       },
     });
     offs.push(() => { stCouloir.kill(); html0.classList.remove('couloir'); });
@@ -553,6 +556,36 @@ function monterFinale(el, app, vitrine) {
 
 // Mouvement réduit : ni épinglage ni défilement lié. La montre prend la pose de la section la
 // plus visible (accueil ou atelier), sinon elle se retire ; tout le reste est statique.
+// Film du seuil : currentTime suit le défilement, lissé à chaque image.
+function monterCristal(video, etroit) {
+  video.src = etroit ? 'video/mobile/cristal.mp4' : 'video/cristal.mp4';
+  const boite = video.parentElement;
+  let cible = 0;
+  let cur = 0;
+  let raf = 0;
+  const tick = () => {
+    cur += (cible - cur) * 0.14;
+    if (video.readyState >= 1 && video.duration) {
+      const t = cur * (video.duration - 0.05);
+      if (Math.abs(video.currentTime - t) > 1 / 30) video.currentTime = t;
+    }
+    raf = Math.abs(cible - cur) > 0.0005 ? requestAnimationFrame(tick) : 0;
+  };
+  // iOS ne peint pas les images d'une vidéo jamais lue.
+  const debloquer = () => { video.play().then(() => video.pause()).catch(() => {}); };
+  window.addEventListener('touchstart', debloquer, { passive: true, once: true });
+  return {
+    // p : 0 devant la pointe, 1 au cœur ; entree : opacité ; voile : assombrissement final.
+    avancer(p, entree = 1, voile = 0) {
+      boite.style.opacity = entree.toFixed(3);
+      boite.style.setProperty('--voile', voile.toFixed(3));
+      cible = p;
+      if (!raf) raf = requestAnimationFrame(tick);
+    },
+    dispose() { cancelAnimationFrame(raf); window.removeEventListener('touchstart', debloquer); video.removeAttribute('src'); video.load(); },
+  };
+}
+
 function reduit(el, front, app, P, depart, etroit) {
   const d = app.director;
   const pieces = d.watch ? createPieces(front.querySelector('[data-pieces]'), { stage: app.stage, director: d, etroit }) : null;

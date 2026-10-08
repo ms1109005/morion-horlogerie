@@ -302,3 +302,12 @@
   .finale__rang { grid-template-columns: 1fr 1fr; row-gap: var(--e-6); --vue-h: 24vh; }
   .finale__choisir { opacity: 1; scale: 1; width: 64px; height: 64px; }
 }
+
+/* ---- Seuil : la plongée dans le cristal (vidéo pilotée au défilement) ---- */
+.seuil__cristal { position: absolute; inset: 0; overflow: hidden; opacity: 0; pointer-events: none; }
+.seuil__cristal video { width: 100%; height: 100%; object-fit: cover; }
+.seuil__cristal::after {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(70% 60% at 50% 50%, rgb(17 19 22 / calc(0.72 * var(--voile, 0))) 0%, rgb(17 19 22 / calc(0.25 + 0.6 * var(--voile, 0))) 100%);
+}
+.accueil-reduit .seuil__cristal { opacity: 1; --voile: 1; }
