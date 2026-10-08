@@ -227,3 +227,14 @@ Rehaussements tirés des challengers du tirage impeccable (clé `87aada4e`) :
   WebP par `outils/visuels.py --optimiser` (7,3 Mo → 0,9 Mo, originaux dans
   `_sources/visuels-originaux/`) ; vidéos 720p dans `video/mobile/`, servies sous 720 px de
   large par `<source media>` (atelier 2,7 → 0,8 Mo, poignet 6,8 → 1,2 Mo).
+- **D35.** Fiche : le bloc d'achat devient une **carte** (fond et filet des pastilles), prix en
+  `--t-2` et « Détail du prix » sur la même ligne, actions dessous, mention en pied. Le prix flottait
+  en 52 px au-dessus de quatre lignes empilées : sous 760 px de haut (portables), le bloc montait sur
+  la pastille Gravure (mesuré à 1536 × 730, 1366 × 680, 1280 × 680, 1024 × 700). La carte (~148 px)
+  laisse la pastille libre dès 680 px, hauteur minimale du hero. Sa largeur est une variable
+  (`--achat-l`) que le plateau d'options reprend ; entre 720 et 1100 px elle s'élargit pour garder
+  ses deux boutons sur une ligne, et la référence du coin bas gauche, recouverte par le plateau
+  calé à gauche, s'efface comme sur mobile.
+- **D36.** Chargement sur téléphone : le perlage (la plus longue des textures calculées pendant
+  l'intro, ~0,3 s d'un bloc) est tiré en 512 px à motif identique (grains, anneaux et relief à
+  l'échelle) : 268 → 78 ms mesurés.

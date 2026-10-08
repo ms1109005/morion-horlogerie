@@ -179,24 +179,27 @@ export const azurageNormal = (n = 512, rings = 42) => cached(`azu${n}${rings}`, 
   return toTexture(heightToNormal(h, n, 2.4));
 });
 
-// Perlage : grains circulaires qui se chevauchent (platine du mouvement).
-export const perlageNormal = (n = 1024, step = 34) => cached(`per${n}${step}`, () => {
+// Perlage : grains circulaires qui se chevauchent (platine du mouvement). C'est la texture la plus
+// longue à calculer au chargement (~0,3 s d'un bloc) : sur téléphone elle est tirée en 512 px, à
+// motif identique (grains, anneaux et relief mis à l'échelle k), quatre fois moins de calcul.
+export const perlageNormal = (n = IMPRESSION / 2, step = 34 * (n / 1024)) => cached(`per${n}${step}`, () => {
+  const k = n / 1024;
   const h = new Float32Array(n * n);
   const rad = step * 0.78;
   for (let cy = 0; cy < n + step; cy += step * 0.72) {
     for (let cx = 0; cx < n + step; cx += step * 0.72) {
-      const ox = cx + (Math.random() - 0.5) * 4, oy = cy + (Math.random() - 0.5) * 4;
+      const ox = cx + (Math.random() - 0.5) * 4 * k, oy = cy + (Math.random() - 0.5) * 4 * k;
       for (let y = Math.floor(oy - rad); y < oy + rad; y++) {
         for (let x = Math.floor(ox - rad); x < ox + rad; x++) {
           const d = Math.hypot(x - ox, y - oy);
           if (d > rad) continue;
           const xx = (x + n) % n, yy = (y + n) % n;
-          h[yy * n + xx] = (Math.sin(d * 0.9) * 0.5 + 0.5) * (1 - d / rad) + (1 - d / rad) * 0.4;
+          h[yy * n + xx] = (Math.sin((d * 0.9) / k) * 0.5 + 0.5) * (1 - d / rad) + (1 - d / rad) * 0.4;
         }
       }
     }
   }
-  return toTexture(heightToNormal(h, n, 1.6), { repeat: true });
+  return toTexture(heightToNormal(h, n, 1.6 * k), { repeat: true });
 });
 
 // Côtes de Genève : bandes ondulées parallèles (ponts du mouvement).
