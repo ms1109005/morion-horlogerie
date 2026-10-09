@@ -32,8 +32,12 @@ def lister():
             if ext.lower() not in extensions or racine.startswith("."):
                 continue
             actuel = presents.get(racine)
-            if actuel and extensions.index(os.path.splitext(actuel)[1].lower()) <= extensions.index(ext.lower()):
-                continue
+            if actuel:
+                # Même nom déjà pris dans l'autre dossier (img/cristal.webp et video/cristal.mp4) :
+                # le premier reste, les extensions des deux dossiers ne se comparent pas.
+                ext_actuel = os.path.splitext(actuel)[1].lower()
+                if ext_actuel not in extensions or extensions.index(ext_actuel) <= extensions.index(ext.lower()):
+                    continue
             presents[racine] = f"{dossier}/{nom}"
     return presents
 

@@ -4,6 +4,7 @@ export const PRESENTS = {
   "atelier-etabli": "img/atelier-etabli.webp",
   "atelier-loupe": "img/atelier-loupe.webp",
   "atelier-reglage": "img/atelier-reglage.webp",
+  "cristal": "img/cristal.webp",
   "matiere-acier": "img/matiere-acier.webp",
   "matiere-ceramique": "img/matiere-ceramique.webp",
   "matiere-or-jaune": "img/matiere-or-jaune.webp",
