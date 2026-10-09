@@ -90,6 +90,7 @@ export function playIntro({ el, tracker, reduced, onUnlock }) {
     }
     const v = introCounter(elapsed, tracker.progress(), 1.9);
     compteur.textContent = String(v).padStart(3, '0');
+    passer.style.setProperty('--p', (v / 100).toFixed(3));
     const n = Math.round(v * 0.6);
     while (allumes < n) { traits[allumes].classList.add('allume'); allumes += 1; }
     const dz = Math.floor(v / 10);

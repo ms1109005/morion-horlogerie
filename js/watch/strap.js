@@ -48,6 +48,30 @@ function roundedRect(w, h, r) {
   return s;
 }
 
+// Profil d'un maillon dans le plan (sens du bracelet, extérieur) : trapèze aux coins arrondis,
+// face extérieure bombée de `crown`. Extrudé sur la largeur, puis tourné pour que X = largeur,
+// Y = sens du bracelet, Z = extérieur (le repère de frameAt).
+function linkGeometry(lenOut, lenIn, th, crown, width, bevel) {
+  // Le biseau déborde du profil de `bs` : on le retire pour garder les cotes demandées.
+  const bs = bevel * 0.8, ho = lenOut / 2 - bs, hi = lenIn / 2 - bs, h = th / 2 - bs, r = Math.min(0.32, th * 0.11);
+  const s = new THREE.Shape();
+  s.moveTo(-hi + r, -h);
+  s.lineTo(hi - r, -h);
+  s.quadraticCurveTo(hi, -h, hi + (ho - hi) * (r / th), -h + r);
+  s.lineTo(ho, h - r);
+  s.quadraticCurveTo(ho, h, ho - r, h);
+  s.quadraticCurveTo(0, h + crown * 2, -ho + r, h);
+  s.quadraticCurveTo(-ho, h, -ho, h - r);
+  s.lineTo(-hi - (ho - hi) * (r / th), -h + r);
+  s.quadraticCurveTo(-hi, -h, -hi + r, -h);
+  const g = new THREE.ExtrudeGeometry(s, {
+    depth: width, bevelEnabled: true, bevelThickness: bevel, bevelSize: bs, bevelSegments: 3, curveSegments: 8,
+  });
+  g.translate(0, 0, -width / 2);
+  g.applyMatrix4(new THREE.Matrix4().set(0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1));
+  return g;
+}
+
 // --- Bracelet métal intégré : maillons latéraux brossés, maillons centraux polis ---
 
 function metalBracelet(config, curve, a, q) {
@@ -61,22 +85,19 @@ function metalBracelet(config, curve, a, q) {
     if (Math.abs(u - 0.5) < claspHalf) continue;
     rows.push(u);
   }
-  const thick = 3.3;
-  // Le maillon est modelé à sa vraie largeur, chanfrein compris : l'échelle par instance reste
-  // entre 0,8 et 1. Une forme de largeur 1 mise à l'échelle x8 étirait le chanfrein d'autant,
-  // élargissait le maillon de 80 % (il chevauchait son voisin) et donnait l'arête en escalier.
-  const BIS_O = 0.3, BIS_C = 0.26; // taille du chanfrein dans le plan de la forme
+  // Chaque maillon est un voussoir vu de profil : plus long dehors que dedans, face extérieure
+  // bombée, arêtes arrondies. Posés sur le galbe du poignet, les maillons se touchent presque
+  // par leur face extérieure et le bracelet se lit comme une bande continue, au lieu d'une
+  // file de cubes séparés par des vides. Le chanfrein court sur les deux flancs du maillon.
+  const thick = 3.0;
+  const BIS_O = 0.3, BIS_C = 0.24;
   const outerRef = a.w * 0.34 - 0.25;
   const centerRef = a.w - a.w * 0.34 * 2 - 0.5;
-  const outerGeo = new THREE.ExtrudeGeometry(roundedRect(outerRef - BIS_O * 2, pitch - 0.42 - BIS_O * 2, 0.5), {
-    depth: thick - 1.0, bevelEnabled: true, bevelThickness: 0.42, bevelSize: BIS_O, bevelSegments: 3, curveSegments: 6,
-  });
-  outerGeo.translate(0, 0, -(thick - 1.0) / 2);
-  const centerGeo = new THREE.ExtrudeGeometry(roundedRect(centerRef - BIS_C * 2, pitch / 2 - 0.42 - BIS_C * 2, 0.4), {
-    depth: thick - 1.2, bevelEnabled: true, bevelThickness: 0.4, bevelSize: BIS_C, bevelSegments: 3, curveSegments: 6,
-  });
-  centerGeo.translate(0, 0, -(thick - 1.2) / 2 + 0.25);
-  const mats = [braceletMaterial(config.case, 'brosse'), braceletMaterial(config.case, 'poli')];
+  const outerGeo = linkGeometry(pitch - 0.2, (pitch - 0.2) * 0.84, thick, 0.1, outerRef - BIS_O * 2, BIS_O);
+  const centerGeo = linkGeometry(pitch / 2 - 0.22, (pitch / 2 - 0.22) * 0.84, thick - 0.5, 0.14, centerRef - BIS_C * 2, BIS_C);
+  centerGeo.translate(0, 0, 0.42);
+  // Flancs (bouchons de l'extrusion) polis, dessus brossé dans le sens du bracelet.
+  const mats = [braceletMaterial(config.case, 'poli'), braceletMaterial(config.case, 'brosse')];
   const outer = new THREE.InstancedMesh(outerGeo, mats, rows.length * 2);
   const center = new THREE.InstancedMesh(centerGeo, braceletMaterial(config.case, 'poli'), rows.length * 2);
   outer.name = 'maillons-lateraux';

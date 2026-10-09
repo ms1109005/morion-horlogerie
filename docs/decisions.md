@@ -238,3 +238,9 @@ Rehaussements tirés des challengers du tirage impeccable (clé `87aada4e`) :
 - **D36.** Chargement sur téléphone : le perlage (la plus longue des textures calculées pendant
   l'intro, ~0,3 s d'un bloc) est tiré en 512 px à motif identique (grains, anneaux et relief à
   l'échelle) : 268 → 78 ms mesurés.
+- **D37.** Bracelet métal : chaque maillon est un **voussoir** vu de profil (plus long dehors que
+  dedans, rapport 0,84), face extérieure à peine bombée, coins arrondis, chanfrein sur les flancs.
+  Extrudé sur la largeur au lieu de l'épaisseur. Les boîtes plates d'avant s'ouvraient sur le galbe
+  du poignet : de profil, une file de cubes séparés par des vides, et l'image de partage le
+  montrait. Désormais les maillons se touchent par leur face extérieure et le bracelet se lit comme
+  une bande brossée continue, flancs polis. `img/partage.jpg` refaite depuis l'accueil.

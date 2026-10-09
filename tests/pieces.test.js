@@ -13,8 +13,9 @@ test('pièces étiquetées : 9, identifiants uniques, fiches courtes, sans tiret
   });
 });
 
-test('chapitres : les 4 finitions dans l\'ordre, un visuel matière chacun', () => {
-  assert.deepEqual(CHAPITRES.map((c) => c.finition), Object.keys(FINISHES));
+// Les chapitres suivent les heures de la journée, pas l'ordre du catalogue : chaque finition une fois.
+test('chapitres : les 4 finitions, une fois chacune, un visuel matière chacun', () => {
+  assert.deepEqual(CHAPITRES.map((c) => c.finition).sort(), Object.keys(FINISHES).sort());
   CHAPITRES.forEach((c) => {
     assert.match(c.visuel, /^matiere-/);
     assert.ok(!/[—–]/.test(c.titre + c.texte));

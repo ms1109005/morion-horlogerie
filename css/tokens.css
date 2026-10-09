@@ -37,10 +37,11 @@
     radial-gradient(120% 90% at 72% 0%, var(--c-fume-m) 0%, var(--c-fond) 70%);
 
   /* Chapitres couleur de l'accueil (aplats pleine page, bascule nette) */
-  --c-chap-ac: #5d6670;  --c-chap-ac-encre: #f2f3f4;
-  --c-chap-cn: #070708;  --c-chap-cn-encre: #ecebe9;
-  --c-chap-oj: #cfa84f;  --c-chap-oj-encre: #1c1810;
-  --c-chap-or: #c9907d;  --c-chap-or-encre: #26160f;
+  /* Une journée en quatre matières : des écrins sombres, chacun éclairé par la lumière de son heure. */
+  --c-chap-ac: #161a1f;  --c-chap-ac-encre: #f2f3f4;  --c-chap-ac-lum: rgb(176 196 214 / 0.34);
+  --c-chap-cn: #060607;  --c-chap-cn-encre: #ecebe9;  --c-chap-cn-lum: rgb(92 108 150 / 0.22);
+  --c-chap-oj: #1d160b;  --c-chap-oj-encre: #f5ecd9;  --c-chap-oj-lum: rgb(232 190 104 / 0.36);
+  --c-chap-or: #1e1210;  --c-chap-or-encre: #f6e8e2;  --c-chap-or-lum: rgb(226 140 112 / 0.34);
 
   /* Fontes : Michroma, capitale large des cadrans de chronographe ; Albert Sans pour lire. */
   --f-display: 'Michroma', 'Albert Sans', sans-serif;

@@ -211,7 +211,18 @@ html:not(.reduit) .intro__hex i { animation: arete var(--dur-vague) var(--ease-s
 .intro__mot { display: flex; gap: 0.42em; font: 400 clamp(1.25rem, 2.4vw, 2rem) var(--f-display); letter-spacing: 0; }
 .intro__mot span { display: inline-block; overflow: clip; }
 .intro__mot i { display: inline-block; font-style: normal; }
-.intro__passer { position: absolute; bottom: calc(var(--rehaut) + var(--e-6)); left: 50%; translate: -50% 0; color: var(--c-encre-2); font-size: var(--t-petit); }
+.intro__passer {
+  position: absolute; bottom: calc(var(--rehaut) + var(--e-6)); left: 50%; translate: -50% 0;
+  display: inline-flex; align-items: center; gap: 12px; padding: 10px 14px 10px 18px;
+  color: var(--c-encre-2); font-size: var(--t-petit); letter-spacing: .14em; text-transform: uppercase;
+  border: 1px solid rgb(242 243 244 / 0.16); border-radius: 999px; background: rgb(17 19 22 / 0.4);
+  overflow: hidden; transition: color var(--dur-micro) linear, border-color var(--dur-micro) linear;
+}
+/* Le filet du bas suit le chargement : on voit ce qu'on s'épargne. */
+.intro__passer::after { content: ""; position: absolute; left: 18px; bottom: 5px; height: 1px; width: calc(100% - 36px); background: var(--c-encre); transform-origin: 0 50%; transform: scaleX(var(--p, 0)); }
+.intro__passer:hover, .intro__passer:focus-visible { color: var(--c-encre); border-color: rgb(242 243 244 / 0.4); }
+.intro__passer kbd { font: inherit; font-size: .85em; letter-spacing: .06em; padding: 2px 7px; border: 1px solid rgb(242 243 244 / 0.2); border-radius: 4px; text-transform: none; }
+@media (hover: none) { .intro__passer kbd { display: none; } }
 
 /* ---- Tiroir panier ---- */
 .voile {
