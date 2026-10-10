@@ -88,10 +88,11 @@ function buildStudioEnv(renderer, preset = 'clair') {
 
 // Options : `controls` (OrbitControls, studio) ; `loop` : 'continu' (studio, setAnimationLoop) ou
 // 'demande' (site : frame(dt) appelé par gsap.ticker, rendu seulement si invalidé ou tenu) ;
-// `dpr` : densité voulue (le site la calcule), sinon min(devicePixelRatio, dprMax).
+// `dpr` : densité voulue (le site la calcule), sinon min(devicePixelRatio, dprMax) ;
+// `post` : finition de l’image (creux et arêtes, voir post.js), chargée à part, ordinateur seulement.
 export function createStage(canvas, {
   dprMax = 2, dpr, env = 'clair', controls: withControls = true, loop = 'continu', exposure = 1.0, envIntensity = 1,
-  keyLight = 1.4,
+  keyLight = 1.4, post: withPost = false,
 } = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -142,10 +143,12 @@ export function createStage(canvas, {
     return () => { if (!released) { released = true; holds -= 1; dirty = 1; } };
   };
 
+  let post = null;
   function resize() {
     const w = canvas.clientWidth || window.innerWidth;
     const h = canvas.clientHeight || window.innerHeight;
     renderer.setSize(w, h, false);
+    post?.setSize(w, h, pixelRatio);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     dirty = 1;
@@ -154,8 +157,12 @@ export function createStage(canvas, {
   resize();
 
   function render() {
-    renderer.render(scene, camera);
+    if (post) post.render(); else renderer.render(scene, camera);
     stats.renders += 1;
+  }
+  // La finition arrive après la première image : si elle échoue, le rendu simple reste.
+  if (withPost) {
+    import('./post.js').then(({ createPost }) => { post = createPost(renderer, scene, camera); resize(); }).catch(() => {});
   }
 
   // Une image : fonctions d’image toujours (elles décident d’invalider), rendu si nécessaire.
@@ -214,7 +221,7 @@ export function createStage(canvas, {
     renderer.setSize(size, height, false);
     camera.aspect = size / height;
     camera.updateProjectionMatrix();
-    render();
+    renderer.render(scene, camera);
     return new Promise((resolve) => {
       canvas.toBlob((blob) => {
         renderer.setPixelRatio(prevRatio);

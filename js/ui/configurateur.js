@@ -225,6 +225,7 @@ export function createConfigurateur({ root, app, config: initial, onChange, prix
   pastilles.forEach((b) => b.addEventListener('click', () => setZone(b.dataset.zone, { focus: false })));
 
   // ---- Rotation au glisser (souris, stylet, doigt à l’horizontale) ----
+  const CRAN = Math.PI / 12;
   const glisser = root.querySelector('[data-glisser]');
   if (glisser && watch) {
     let drag = null;
@@ -249,7 +250,9 @@ export function createConfigurateur({ root, app, config: initial, onChange, prix
       const v = drag.vx;
       drag = null;
       director.setTilt(true);
-      if (!reduced && Math.abs(v) > 0.05) director.to({ rotY: director.state.rotY + v * 0.9 }, { duration: DUR.moyen, ease: EASE.sortie });
+      // La montre s’arrête sur un cran, comme une lunette : vingt-quatre positions par tour.
+      const lance = !reduced && Math.abs(v) > 0.05 ? v * 0.9 : 0;
+      director.to({ rotY: Math.round((director.state.rotY + lance) / CRAN) * CRAN }, { duration: lance ? DUR.moyen : DUR.court, ease: EASE.echappement });
     };
     glisser.addEventListener('pointerdown', down);
     glisser.addEventListener('pointermove', move);

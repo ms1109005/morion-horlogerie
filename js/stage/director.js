@@ -43,6 +43,24 @@ export function createDirector(stage, watch, { reduced = false, halo = null } = 
   spin.add(watch);
   scene.add(pivot);
 
+  // Ombre portée : une tache douce derrière la montre, un peu plus bas, qui la détache du fond.
+  // Elle reste fixe quand la montre s’incline au pointeur : c’est ce décalage qui donne la profondeur.
+  const ombre = (() => {
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const g = c.getContext('2d');
+    const d = g.createRadialGradient(64, 64, 6, 64, 64, 64);
+    d.addColorStop(0, 'rgba(0,0,0,0.62)'); d.addColorStop(0.45, 'rgba(0,0,0,0.3)'); d.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = d; g.fillRect(0, 0, 128, 128);
+    const m = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, toneMapped: false }),
+    );
+    m.renderOrder = -1;
+    pivot.add(m);
+    return m;
+  })();
+
   const narrow = () => window.innerWidth < 720;
   const table = () => (narrow() ? POSES_ETROIT : POSES);
   let current = 'accueil';
@@ -60,6 +78,9 @@ export function createDirector(stage, watch, { reduced = false, halo = null } = 
     pivot.visible = state.visible > 0.001 && state.k > 0.001;
     spin.rotation.set(state.rotX, state.rotY, state.rotZ);
     watch.userData.setExplode(state.eclate);
+    ombre.scale.set(diametre * 2.1, diametre * 2.9, 1);
+    ombre.position.set(diametre * 0.07, -diametre * 0.16, -diametre * 0.9);
+    ombre.material.opacity = 1 - Math.min(1, state.eclate * 1.5);
     if (halo) {
       // Le centre du fumé suit la montre : translation composée par le GPU, aucun repeint.
       halo.style.transform = `translate3d(calc(-50% + ${state.x * 50}vw), calc(-50% + ${-state.y * 50}dvh), 0)`;
