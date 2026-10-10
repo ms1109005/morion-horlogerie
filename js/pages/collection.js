@@ -41,7 +41,7 @@ function panneau(id) {
 function edito(id) {
   const f = FAMILIES[id];
   return html`
-    <div class="edito__carte">
+    <div class="edito__carte" data-lenis-prevent>
       <button class="fermer edito__fermer" type="button" data-fermer-edito>Fermer</button>
       <img class="edito__rendu" src="img/rendus/mor-${id.toLowerCase()}-ac.webp" alt="${f.nomComplet} en acier" width="800" height="800">
       <div class="edito__texte">
@@ -153,6 +153,8 @@ export default {
     let t0 = null;
     racine.addEventListener('touchstart', (e) => { t0 = e.touches[0]; salles?.reveiller(); }, { passive: true });
     racine.addEventListener('touchend', (e) => {
+      // Fiche ouverte : le doigt fait défiler la fiche, il ne change pas de salle.
+      if (editoEl.classList.contains('ouvert')) { t0 = null; return; }
       if (!t0) return;
       const t1 = e.changedTouches[0];
       const dx = t1.clientX - t0.clientX;
