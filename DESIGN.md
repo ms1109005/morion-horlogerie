@@ -254,6 +254,11 @@ Cette zone appartient à la montre.
 ## Typography
 
 **Display Font :** Michroma (repli Albert Sans, sans-serif)
+**Title Font :** Zodiak 400 (Fontshare, repli Iowan Old Style, Georgia, serif), depuis le 10 octobre 2026 :
+tous les titres `h1` à `h4`, `--f-titre`. Des empattements taillés en biseau, comme les facettes du
+cristal : une maison horlogère sans empattements se lisait comme une marque de technologie. Échelle
+relevée : `--t-hero` (accueil), `--t-1` et `--t-2` dans `css/tokens.css`, qui font foi sur les tailles
+citées plus bas.
 **Body Font :** Albert Sans (repli system-ui, sans-serif)
 **Label/3D Font :** Syncopate, uniquement dans les textures de la montre 3D
 

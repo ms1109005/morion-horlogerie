@@ -7,7 +7,8 @@ import { DIAL_FONT } from './watch/dial.js';
 import { buildWatch } from './watch/build.js';
 
 const params = new URLSearchParams(location.search);
-const stage = createStage(document.getElementById('stage'));
+// Même environnement lumineux que le site : les vignettes exportées montrent la montre telle qu'on la voit.
+const stage = createStage(document.getElementById('stage'), { env: 'ecrin' });
 let config = decode(params.get('c') || '') || defaultConfig(params.get('f') || 'PR42', params.get('fin') || 'AC');
 
 await Promise.all([document.fonts.load(`700 40px ${DIAL_FONT}`), document.fonts.load(`400 40px ${DIAL_FONT}`)]);

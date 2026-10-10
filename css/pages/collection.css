@@ -15,7 +15,7 @@ html.salles-actives, html.salles-actives body { overflow: hidden; }
 .salles.edito-ouvert .salles__ui { opacity: 0; }
 .salles__ui > * { pointer-events: auto; }
 .salle {
-  position: absolute; left: var(--marge); bottom: calc(var(--rehaut) + 6.5rem); max-width: 30rem;
+  position: absolute; left: var(--marge); bottom: calc(var(--rehaut) + 6.5rem); max-width: min(40rem, 46vw);
   display: grid; gap: var(--e-3); justify-items: start;
 }
 .salle__titre { font-size: var(--t-1); }

@@ -113,7 +113,7 @@ html[data-encre="sombre"] .rehaut .cinq { stroke: rgb(28 24 16 / 0.62); }
 }
 .menu.ouvert { visibility: visible; opacity: 1; }
 .menu__liens { display: grid; gap: var(--e-3); list-style: none; padding: 0; }
-.menu__liens a { font: 500 var(--t-1) / 1.1 var(--f-texte); text-decoration: none; letter-spacing: -0.02em; display: block; padding: var(--e-2) 0; }
+.menu__liens a { font: 400 var(--t-1) / 1.1 var(--f-titre); text-decoration: none; letter-spacing: -0.02em; display: block; padding: var(--e-2) 0; }
 .menu__familles { display: grid; gap: var(--e-4); list-style: none; padding: 0; border-top: var(--filet) solid var(--c-filet); padding-top: var(--e-5); }
 .menu__familles a { display: flex; justify-content: space-between; gap: var(--e-4); text-decoration: none; color: var(--c-encre-2); padding: var(--e-2) 0; }
 .menu__familles a span:last-child { color: var(--c-encre); font-variant-numeric: tabular-nums; }

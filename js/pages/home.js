@@ -52,7 +52,7 @@ function renderAccueil() {
   <section class="hero-accueil" data-hero data-pose-reduite="accueil">
     <p class="geant" aria-hidden="true">MORION</p>
     <div class="hero-accueil__texte">
-      <h1 tabindex="-1">Une montre se compose pièce par pièce.</h1>
+      <h1 tabindex="-1">Une montre<br>se compose<br>pièce par pièce.</h1>
       <p>Trois familles, quatre matières, un calibre maison. Vous choisissez chaque pièce, l’atelier l’assemble.</p>
       <div class="actions">
         <a class="btn btn--plein" href="montre/MOR-PR42-AC">Composer la vôtre</a>
@@ -64,7 +64,7 @@ function renderAccueil() {
 
   <section class="assemblage" data-assemblage aria-labelledby="assemblage-titre" data-pose-reduite="assemblage">
     <div class="assemblage__texte">
-      <h2 id="assemblage-titre">Le morion a six faces. Le Prisme, cinquante-neuf pièces.</h2>
+      <h2 id="assemblage-titre">Le morion a six faces.<br>Le Prisme, cinquante-neuf pièces.</h2>
       <p>Le Prisme se démonte sous vos yeux, de la glace saphir au rotor, puis se remonte. Touchez une pièce pour lire sa fiche.</p>
     </div>
     <p class="assemblage__compteur"><span class="assemblage__legende">Pièce</span> <span class="num" data-compteur>00</span> <span class="assemblage__legende">sur <span class="num" data-total>59</span></span></p>

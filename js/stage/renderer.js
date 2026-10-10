@@ -16,7 +16,23 @@ const TARGET = new THREE.Vector3(0, 0, -14);
 export const ENV_PRESETS = {
   clair: { room: 0.5, floor: 0.13, top: 5, left: 7, right: 5, back: 4, front: 2.2, flags: 0.05, rim: 2.6 },
   nuit: { room: 0.015, floor: 0.01, top: 6, left: 10, right: 6, back: 5, front: 0.8, flags: 0, rim: 3 },
+  // Écrin : la pièce est sombre et les boîtes à lumière ont des bords doux. Un métal ne se lit
+  // comme du métal que s'il reflète du clair ET du sombre ; dans une pièce grise, il vire à l'aluminium.
+  ecrin: { room: 0.16, floor: 0.04, top: 6.5, left: 8.5, right: 5.5, back: 4.5, front: 4.2, flags: 0.02, rim: 3.2, doux: true },
 };
+
+// Dégradé d'une boîte à lumière : plein au centre, fondu vers les bords (aucun reflet à arête vive).
+function softbox() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const g = c.getContext('2d');
+  const d = g.createRadialGradient(64, 64, 8, 64, 64, 64);
+  d.addColorStop(0, '#fff'); d.addColorStop(0.55, '#d0d0d0'); d.addColorStop(1, '#000');
+  g.fillStyle = d; g.fillRect(0, 0, 128, 128);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
 
 function buildStudioEnv(renderer, preset = 'clair') {
   const p = ENV_PRESETS[preset];
@@ -27,13 +43,15 @@ function buildStudioEnv(renderer, preset = 'clair') {
   );
   env.add(room);
 
+  const doux = p.doux ? softbox() : null;
   const panel = (w, h, intensity, pos, look, tint = [1, 1, 1]) => {
+    // Bords doux : la boîte s'ajoute à la pièce et s'y fond, agrandie pour garder la même surface utile.
+    const k = doux && intensity > 0.5 ? 1.35 : 1;
     const m = new THREE.Mesh(
-      new THREE.PlaneGeometry(w, h),
-      new THREE.MeshBasicMaterial({
-        color: new THREE.Color(tint[0] * intensity, tint[1] * intensity, tint[2] * intensity),
-        side: THREE.DoubleSide,
-      }),
+      new THREE.PlaneGeometry(w * k, h * k),
+      new THREE.MeshBasicMaterial(k > 1
+        ? { color: new THREE.Color(tint[0] * intensity, tint[1] * intensity, tint[2] * intensity), map: doux, side: THREE.DoubleSide, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }
+        : { color: new THREE.Color(tint[0] * intensity, tint[1] * intensity, tint[2] * intensity), side: THREE.DoubleSide }),
     );
     m.position.set(...pos);
     m.lookAt(...look);
@@ -64,6 +82,7 @@ function buildStudioEnv(renderer, preset = 'clair') {
   const tex = pmrem.fromScene(env, 0.045, 0.5, 1000, { size: 512 }).texture;
   pmrem.dispose();
   env.traverse((o) => { o.geometry?.dispose(); o.material?.dispose(); });
+  doux?.dispose();
   return tex;
 }
 

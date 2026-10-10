@@ -1,5 +1,6 @@
 ﻿# Dépendances et caches
 .impeccable/
+.netlify/
 __pycache__/
 *.pyc
 

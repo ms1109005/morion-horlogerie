@@ -67,7 +67,7 @@ const toutesEtapes = () => [etapes.scene, ...etapes.textures, etapes.montre, eta
 const scene3d = fontsReady.then(async () => {
   performance.mark('morion:fontes');
   await nextFrame();
-  const stage = createStage($('#scene'), { controls: false, loop: 'demande', dpr, exposure: 0.95, envIntensity: 0.85, keyLight: 0.6 });
+  const stage = createStage($('#scene'), { controls: false, loop: 'demande', dpr, env: 'ecrin', exposure: 1.0, envIntensity: 1, keyLight: 0.7 });
   etapes.scene();
   performance.mark('morion:scene');
   // Textures générées pixel par pixel : une par image, pour que l’intro ne se fige pas.

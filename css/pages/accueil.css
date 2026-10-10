@@ -20,8 +20,8 @@
   font: 400 var(--t-geant) / 1 var(--f-display); letter-spacing: 0.06em; white-space: nowrap;
   color: rgb(236 234 230 / 0.075); pointer-events: none; user-select: none;
 }
-.hero-accueil__texte { position: relative; max-width: 31rem; }
-.hero-accueil__texte h1 { font-size: var(--t-1); }
+.hero-accueil__texte { position: relative; max-width: min(46rem, 48vw); }
+.hero-accueil__texte h1 { font-size: var(--t-hero); line-height: 1; text-wrap: nowrap; }
 .hero-accueil__texte p { margin-top: var(--e-4); color: var(--c-encre-2); max-width: 27rem; }
 .actions { display: flex; flex-wrap: wrap; gap: var(--e-3); margin-top: var(--e-6); }
 .hero-accueil__etiquette {
@@ -33,9 +33,9 @@
 
 /* ---- Assemblage (épinglé) ---- */
 .assemblage { position: relative; height: 100dvh; padding: calc(var(--rehaut) + 7rem) var(--marge) calc(var(--rehaut) + 3rem); }
-.assemblage__texte { max-width: 26rem; display: grid; gap: var(--e-4); }
-.assemblage__texte h2 { font-size: var(--t-2); line-height: 1.15; text-wrap: balance; }
-.assemblage__texte p { color: var(--c-encre-2); text-wrap: pretty; }
+.assemblage__texte { max-width: 34rem; display: grid; gap: var(--e-4); }
+.assemblage__texte h2 { font-size: var(--t-2); line-height: 1.1; text-wrap: balance; }
+.assemblage__texte p { color: var(--c-encre-2); text-wrap: pretty; max-width: 26rem; }
 .assemblage__compteur {
   position: absolute; left: var(--marge); bottom: calc(var(--rehaut) + 2.5rem);
   display: flex; align-items: baseline; gap: var(--e-2);
@@ -234,6 +234,7 @@
 /* ---- Étroit ---- */
 @media (max-width: 719px) {
   .hero-accueil { padding-bottom: calc(var(--rehaut) + 2rem); }
+  .hero-accueil__texte { max-width: none; }
   /* Empilées, deux pilules de largeurs différentes se lisent comme une erreur de gabarit. */
   .hero-accueil .actions { display: grid; justify-items: stretch; }
   /* La montre est haute et centrée sur écran étroit : l'ombre la suit. */
