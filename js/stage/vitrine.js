@@ -9,6 +9,17 @@ import { defaultConfig } from '../store/config.js';
 import { FAMILIES } from '../data/catalogue.js';
 
 const CAM_Z = 400;
+
+// Un envoi de texture au GPU peut prendre plusieurs dizaines de millisecondes : fait pendant qu'on
+// fait défiler, il fige une image. Les envois attendent donc 250 ms sans défilement.
+let dernierDefilement = 0;
+if (typeof window !== 'undefined') {
+  window.addEventListener('scroll', () => { dernierDefilement = performance.now(); }, { passive: true });
+}
+const calme = () => new Promise((r) => {
+  const voir = () => (performance.now() - dernierDefilement > 250 ? r() : setTimeout(voir, 120));
+  voir();
+});
 export const FINITIONS_FINALE = ['AC', 'CN', 'OJ', 'OR'];
 
 export function createVitrine(stage) {
@@ -59,6 +70,7 @@ export function createVitrine(stage) {
       });
       for (const t of textures) {
         if (detruite) break;
+        await calme();
         await new Promise((r) => requestAnimationFrame(r));
         renderer.initTexture(t);
       }
