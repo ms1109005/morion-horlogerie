@@ -68,6 +68,10 @@ const scene3d = fontsReady.then(async () => {
   performance.mark('morion:fontes');
   await nextFrame();
   const stage = createStage($('#scene'), { controls: false, loop: 'demande', dpr, env: 'ecrin', exposure: 1.0, envIntensity: 1, keyLight: 0.7, post: !narrow && window.matchMedia('(pointer: fine)').matches });
+  // Site public : pas de lecture des journaux de compilation à la première utilisation de chaque
+  // shader (outil de développement, gardé dans le studio) ; elle bloque la page jusqu’à la fin de
+  // la compilation (mesuré : 5,8 s cumulées au chargement sur ordinateur).
+  stage.renderer.debug.checkShaderErrors = false;
   etapes.scene();
   performance.mark('morion:scene');
   // Textures générées pixel par pixel : une par image, pour que l’intro ne se fige pas.
@@ -82,9 +86,11 @@ const scene3d = fontsReady.then(async () => {
   etapes.montre();
   performance.mark('morion:montre');
   const director = createDirector(stage, watch, { reduced, halo: $('#halo') });
-  // Une seule boucle : Lenis (ajouté par createScroll) puis la scène.
-  gsap.ticker.add((time, deltaMs) => stage.tick(Math.min(deltaMs / 1000, 0.05)));
+  // Une seule boucle : Lenis (ajouté par createScroll) puis la scène. Elle ne démarre qu’une fois
+  // les shaders compilés en parallèle : une image plus tôt attendrait la compilation en bloquant
+  // la page (mesuré : une tâche de 3 s au processeur ÷4, pendant l’intro).
   await director.ready;
+  gsap.ticker.add((time, deltaMs) => stage.tick(Math.min(deltaMs / 1000, 0.05)));
   etapes.shaders();
   performance.mark('morion:shaders');
   return { stage, director, watch };

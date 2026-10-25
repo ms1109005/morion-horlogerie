@@ -47,6 +47,7 @@ export function createRehaut(svg, { scroll, reduced }) {
     marker.setAttribute('r', narrow ? '3' : '4');
     marker.setAttribute('class', 'repere');
     svg.append(marker);
+    mesurer();
     place();
   }
 
@@ -58,18 +59,22 @@ export function createRehaut(svg, { scroll, reduced }) {
     marker.setAttribute('cy', p.y.toFixed(1));
   }
 
+  // Hauteur de la page relevée au dessin et au rafraîchissement, pas à chaque image de défilement.
+  let max = 0;
+  const mesurer = () => { max = document.documentElement.scrollHeight - window.innerHeight; };
   function fromScroll(y) {
-    const max = document.documentElement.scrollHeight - window.innerHeight;
     progress = max > 0 ? Math.min(1, Math.max(0, y / max)) : 0;
     place();
   }
 
   new ResizeObserver(draw).observe(svg);
   scroll.onScroll(fromScroll);
+  // la page change de hauteur (images chargées, redimensionnement) : ScrollTrigger se rafraîchit, on remesure
+  window.ScrollTrigger?.addEventListener('refresh', () => { mesurer(); fromScroll(window.scrollY); });
   draw();
 
   return {
-    refresh: () => fromScroll(window.scrollY),
+    refresh: () => { mesurer(); fromScroll(window.scrollY); },
     // Un tour complet du repère pendant une transition (remontoir).
     tour(duration) {
       if (reduced) return;

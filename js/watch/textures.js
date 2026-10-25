@@ -72,7 +72,7 @@ function heightToNormal(h, n, strength) {
     for (let x = 0; x < n; x++) {
       const dx = (at(x + 1, y) - at(x - 1, y)) * strength;
       const dy = (at(x, y + 1) - at(x, y - 1)) * strength;
-      const len = Math.hypot(dx, dy, 1);
+      const len = Math.sqrt(dx * dx + dy * dy + 1); // Math.hypot est plusieurs fois plus lent, ici par pixel
       const i = (y * n + x) * 4;
       img.data[i] = (-dx / len * 0.5 + 0.5) * 255;
       img.data[i + 1] = (dy / len * 0.5 + 0.5) * 255;
@@ -128,7 +128,7 @@ export const sunburstAniso = (n = 1024, tangential = true) => cached(`sun${n}${t
   for (let y = 0; y < n; y++) {
     for (let x = 0; x < n; x++) {
       let dx = x / n - 0.5, dy = 0.5 - y / n;
-      const r = Math.hypot(dx, dy) || 1;
+      const r = Math.sqrt(dx * dx + dy * dy) || 1;
       dx /= r; dy /= r;
       if (tangential) [dx, dy] = [-dy, dx];
       const i = (y * n + x) * 4;
@@ -172,7 +172,7 @@ export const azurageNormal = (n = 512, rings = 42) => cached(`azu${n}${rings}`, 
   const h = new Float32Array(n * n);
   for (let y = 0; y < n; y++) {
     for (let x = 0; x < n; x++) {
-      const r = Math.hypot(x / n - 0.5, y / n - 0.5);
+      const u = x / n - 0.5, v = y / n - 0.5, r = Math.sqrt(u * u + v * v);
       h[y * n + x] = Math.sin(r * Math.PI * 2 * rings) * 0.5 + 0.5;
     }
   }
@@ -191,7 +191,7 @@ export const perlageNormal = (n = IMPRESSION / 2, step = 34 * (n / 1024)) => cac
       const ox = cx + (Math.random() - 0.5) * 4 * k, oy = cy + (Math.random() - 0.5) * 4 * k;
       for (let y = Math.floor(oy - rad); y < oy + rad; y++) {
         for (let x = Math.floor(ox - rad); x < ox + rad; x++) {
-          const d = Math.hypot(x - ox, y - oy);
+          const ex = x - ox, ey = y - oy, d = Math.sqrt(ex * ex + ey * ey);
           if (d > rad) continue;
           const xx = (x + n) % n, yy = (y + n) % n;
           h[yy * n + xx] = (Math.sin((d * 0.9) / k) * 0.5 + 0.5) * (1 - d / rad) + (1 - d / rad) * 0.4;

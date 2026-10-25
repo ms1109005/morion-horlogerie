@@ -161,8 +161,42 @@ export function createStage(canvas, {
     stats.renders += 1;
   }
   // La finition arrive après la première image : si elle échoue, le rendu simple reste.
-  if (withPost) {
-    import('./post.js').then(({ createPost }) => { post = createPost(renderer, scene, camera); resize(); }).catch(() => {});
+  // Elle n’est chargée que sur un processeur graphique dédié : sur un circuit intégré (ou inconnu),
+  // elle coûte ~4 s de compilation qui figent la page puis ~70 ms par image (mesuré, Radeon intégré).
+  const gl = renderer.getContext(), infoGpu = gl.getExtension('WEBGL_debug_renderer_info');
+  const gpu = infoGpu ? String(gl.getParameter(infoGpu.UNMASKED_RENDERER_WEBGL)) : '';
+  const gpuIntegre = !gpu || /intel|uhd|iris|radeon\(tm\) graphics|radeon graphics|vega \d+ graphics|mali|adreno|powervr|apple|swiftshader|llvmpipe|basic render/i.test(gpu);
+  if (withPost && !gpuIntegre) {
+    import('./post.js').then(({ createPost }) => {
+      post = createPost(renderer, scene, camera); postDepuis = performance.now(); resize();
+      // Étalonnage : passé la compilation, quatorze images redessinées à l'identique donnent au
+      // régulateur sa mesure avant le premier défilement (invisible : l'image ne change pas).
+      setTimeout(() => {
+        const lacher = hold();
+        let n = 0;
+        const pas = () => { n += 1; if (n >= 14 || !post) lacher(); else requestAnimationFrame(pas); };
+        requestAnimationFrame(pas);
+      }, 2100);
+    }).catch(() => {});
+  }
+
+  // Régulateur : la finition coûte cher au processeur graphique. Si, finition active, les images
+  // s’enchaînent à plus de ~24 ms pendant un mouvement, elle est retirée pour de bon : la fluidité
+  // passe avant (mesuré sur un Radeon intégré : 14 images/s avec la finition, 55 sans).
+  // (les deux premières secondes, compilation des shaders, ne comptent pas)
+  let rendaitAvant = false, postDepuis = 0;
+  const durees = [];
+  function reguler(dt, rend) {
+    if (!post || performance.now() - postDepuis < 2000) return;
+    if (rend && rendaitAvant) {
+      durees.push(dt);
+      if (durees.length > 10) durees.shift();
+      // dix images de suite en moyenne au-delà de 26 ms : décision prise en moins d'une seconde
+      if (durees.length === 10 && durees.reduce((a, b) => a + b, 0) / 10 > 0.026) {
+        post.dispose?.(); post = null; stats.finitionRetiree = true; dirty = 1;
+      }
+    } else if (!rend) durees.length = 0;
+    rendaitAvant = rend;
   }
 
   // Une image : fonctions d’image toujours (elles décident d’invalider), rendu si nécessaire.
@@ -170,7 +204,9 @@ export function createStage(canvas, {
     stats.frames += 1;
     frameFns.forEach((fn) => fn(dt));
     controls?.update();
-    if (loop === 'continu' || dirty || holds > 0) {
+    const rend = loop === 'continu' || dirty || holds > 0;
+    reguler(dt, rend);
+    if (rend) {
       dirty = 0;
       render();
       afterFns.forEach((fn) => fn());

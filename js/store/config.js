@@ -98,6 +98,8 @@ export function price(config) {
   return { base, lines, total: lines.reduce((s, l) => s + l.amount, 0) };
 }
 
+// Un seul formateur : en créer un par appel coûtait ~135 ms au chargement (téléphone, processeur ÷4).
+const EUROS = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 export function formatPrice(n) {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
+  return EUROS.format(n);
 }

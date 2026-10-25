@@ -33,5 +33,6 @@ export function createPost(renderer, scene, camera) {
   return {
     render: () => composer.render(),
     setSize(w, h, ratio) { composer.setPixelRatio(ratio); composer.setSize(w, h); },
+    dispose: () => { composer.dispose(); cible.dispose(); },
   };
 }

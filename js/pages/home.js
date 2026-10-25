@@ -238,10 +238,15 @@ export default {
     const hero = $('[data-hero]');
     const avantHero = front.querySelector('[data-avant-hero]');
     const motPlein = avantHero.querySelector('.geant--plein');
-    const suivreHero = () => {
-      const r = hero.getBoundingClientRect();
-      avantHero.style.transform = `translate3d(0, ${r.top}px, 0)`;
-      avantHero.style.visibility = r.bottom > 0 ? 'visible' : 'hidden';
+    // Le hero est épinglé de st.start à st.end : sa position se déduit du défilement, sans mesure
+    // par image (une mesure après les écritures de l'image force un recalcul de la mise en page).
+    let stHero = null, hHero = hero.offsetHeight, visHero = '';
+    const suivreHero = (y = window.scrollY) => {
+      const top = !stHero ? hero.getBoundingClientRect().top
+        : y < stHero.start ? stHero.start - y : y > stHero.end ? stHero.end - y : 0;
+      avantHero.style.transform = `translate3d(0, ${top}px, 0)`;
+      const vis = top + hHero > 0 ? 'visible' : 'hidden';
+      if (vis !== visHero) { visHero = vis; avantHero.style.visibility = vis; }
     };
     offs.push(app.scroll.onScroll(suivreHero));
     suivreHero();
@@ -255,10 +260,13 @@ export default {
       const x = (1 - pas(0.22, 0.62, p)) * 130;
       motPlein.style.clipPath = `polygon(${x}% 0, 130% 0, 130% 100%, ${x - 30}% 100%)`;
     };
-    segment({ trigger: hero, start: 'top top', end: '+=90%', pin: true }, (p) => {
+    stHero = segment({ trigger: hero, start: 'top top', end: '+=90%', pin: true }, (p) => {
       poser(melange(depart, P.milieu, gsap.parseEase('power2.inOut')(pas(0.05, 0.8, p))));
       effetsHero(p);
-    }, { config: () => defaultConfig('PR42', 'AC'), quitter: effetsHero });
+    }, { config: () => defaultConfig('PR42', 'AC'), quitter: effetsHero }).st;
+    const remesurerHero = () => { hHero = hero.offsetHeight; suivreHero(); };
+    ScrollTrigger.addEventListener('refresh', remesurerHero);
+    offs.push(() => ScrollTrigger.removeEventListener('refresh', remesurerHero));
     // Sortie : le hero part vers le haut avec son mot ; la montre rejoint l’assemblage.
     segment({ trigger: $('[data-assemblage]'), start: 'top bottom', end: 'top top' }, (p) => {
       poser(melange(P.milieu, P.assemblage, gsap.parseEase('power2.inOut')(p)));
